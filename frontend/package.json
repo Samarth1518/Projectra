@@ -1,0 +1,29 @@
+{
+  "name": "projectra-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Gemini-powered AI developer assistant for engineering students and hackathon participants.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.15.1",
+    "framer-motion": "^12.40.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "react-syntax-highlighter": "^16.1.1",
+    "lucide-react": "^1.16.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "latest",
+    "tailwindcss": "^3.4.17",
+    "postcss": "^8.5.3",
+    "autoprefixer": "^10.4.21",
+    "vite": "^8.0.12"
+  }
+}
