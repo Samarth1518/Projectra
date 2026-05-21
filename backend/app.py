@@ -55,6 +55,10 @@ and decisive."""
 def health():
     return {"status": "ok", "model": "gemini-2.0-flash-lite"}
 
+@app.route("/api/ping")
+def ping():
+    return {"status": "alive"}
+
 @app.route("/api/test-stream")
 def test_stream():
     def generate():

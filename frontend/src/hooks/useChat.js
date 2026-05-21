@@ -32,6 +32,18 @@ export function useChat() {
     cancelRequest();
     const controller = new AbortController();
     abortControllerRef.current = controller;
+    
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+    }, 120000); // 2 minute timeout
+
+    const keepAlive = setInterval(async () => {
+      try {
+        await fetch(
+          `${import.meta.env.VITE_API_URL || ""}/api/ping`
+        );
+      } catch (e) {}
+    }, 20000);
 
     const userMessage = {
       id: Date.now(),
@@ -87,6 +99,8 @@ export function useChat() {
               );
               setIsLoading(false);
               abortControllerRef.current = null;
+              clearInterval(keepAlive);
+              clearTimeout(timeoutId);
               return;
             }
             if (data.startsWith("[ERROR]")) {
@@ -102,6 +116,8 @@ export function useChat() {
                 )
               );
               setIsLoading(false);
+              clearInterval(keepAlive);
+              clearTimeout(timeoutId);
               return;
             }
             // Restore escaped newlines
@@ -117,6 +133,8 @@ export function useChat() {
         }
       }
     } catch (err) {
+      clearInterval(keepAlive);
+      clearTimeout(timeoutId);
       if (err.name === "AbortError") {
         setMessages(prev =>
           prev.map(msg =>
