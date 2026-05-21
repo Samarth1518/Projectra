@@ -70,14 +70,25 @@ def chat():
         system_prompt = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["normal"])
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
         
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
-        response = model.generate_content(
-            full_prompt,
-            generation_config=genai.types.GenerationConfig(
-                max_output_tokens=1000,
-                temperature=0.7,
+        try:
+            model = genai.GenerativeModel("gemini-2.0-flash-lite")
+            response = model.generate_content(
+                full_prompt,
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=1000,
+                    temperature=0.7,
+                )
             )
-        )
+        except Exception as first_error:
+            print("Primary model failed, falling back...", first_error)
+            fallback_model = genai.GenerativeModel("gemini-flash-latest")
+            response = fallback_model.generate_content(
+                full_prompt,
+                generation_config=genai.types.GenerationConfig(
+                    max_output_tokens=1000,
+                    temperature=0.7,
+                )
+            )
         
         return jsonify({
             "response": response.text,
@@ -85,6 +96,7 @@ def chat():
         })
         
     except Exception as e:
+        print("Final error:", e)
         return jsonify({
             "response": "Something went wrong. Please try again.",
             "status": "error",
