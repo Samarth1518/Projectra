@@ -71,21 +71,21 @@ def chat():
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
         
         try:
-            model = genai.GenerativeModel("gemini-2.0-flash-lite")
+            model = genai.GenerativeModel("gemini-1.5-flash")
             response = model.generate_content(
                 full_prompt,
                 generation_config=genai.types.GenerationConfig(
-                    max_output_tokens=1000,
+                    max_output_tokens=2048,
                     temperature=0.7,
                 )
             )
         except Exception as first_error:
             print("Primary model failed, falling back...", first_error)
-            fallback_model = genai.GenerativeModel("gemini-flash-latest")
+            fallback_model = genai.GenerativeModel("gemini-1.5-pro")
             response = fallback_model.generate_content(
                 full_prompt,
                 generation_config=genai.types.GenerationConfig(
-                    max_output_tokens=1000,
+                    max_output_tokens=2048,
                     temperature=0.7,
                 )
             )
