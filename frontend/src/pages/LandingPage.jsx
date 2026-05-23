@@ -255,55 +255,42 @@ function BentoSection({ onBuild }) {
   return (
     <section className="px-4 sm:px-6 pb-20 sm:pb-24">
       <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}
         variants={stagger}
         className={cn(
           "mx-auto max-w-6xl grid gap-3 sm:gap-4",
-          "grid-cols-1 md:grid-cols-4 md:auto-rows-[160px]"
+          "grid-cols-1 sm:grid-cols-2",
+          "md:grid-cols-6 md:auto-rows-[180px]"
         )}
       >
-        {/* Big hero card: terminal preview + animated typewriter line */}
-        <BentoCard className="md:col-span-2 md:row-span-2">
+        {/* Big hero card: terminal preview - 4 cols x 2 rows */}
+        <BentoCard className="md:col-span-4 md:row-span-2">
           <TerminalPreview />
         </BentoCard>
 
-        {/* Architecture illustration card */}
-        <BentoCard className="md:col-span-2 md:row-span-2">
-          <ArchitectureIllustration />
+        {/* Counter stat: 2 cols x 1 row, top-right */}
+        <BentoCard className="md:col-span-2 md:row-span-1">
+          <CounterStat target={6} label="Files / build" sub="avg minimal stack" />
         </BentoCard>
 
-        {/* Stat: animated counter */}
-        <BentoCard className="md:col-span-1">
-          <CounterStat target={6} suffix="" label="Files / build" sub="avg minimal stack" />
-        </BentoCard>
-
-        {/* Stat: text */}
-        <BentoCard className="md:col-span-1">
+        {/* Time stat: 2 cols x 1 row, right under counter */}
+        <BentoCard className="md:col-span-2 md:row-span-1">
           <Stat value="~3s" label="Time to first token" sub="cold key, p50" />
         </BentoCard>
 
-        {/* GitHub star card */}
-        <BentoCard className="md:col-span-2">
+        {/* Architecture illustration: 3 cols x 2 rows, bottom-left */}
+        <BentoCard className="md:col-span-3 md:row-span-2">
+          <ArchitectureIllustration />
+        </BentoCard>
+
+        {/* GitHub star: 3 cols x 1 row */}
+        <BentoCard className="md:col-span-3 md:row-span-1">
           <GitHubStarCard />
         </BentoCard>
 
-        {/* Handoff card (full width on its row) */}
-        <BentoCard className="md:col-span-4">
-          <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 h-full">
-            <div className="flex items-center gap-3 sm:gap-4 flex-1">
-              <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-                <MagicWandIcon className="h-5 w-5 text-accent-foreground" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">Open in StackBlitz, ZIP, or push to GitHub.</p>
-                <p className="text-xs text-muted-foreground mt-0.5">One click handoff. No lock-in.</p>
-              </div>
-            </div>
-            <Button size="sm" onClick={onBuild} className="sm:ml-auto self-stretch sm:self-auto">
-              Try it now
-              <ArrowRightIcon className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+        {/* Handoff CTA: 3 cols x 1 row */}
+        <BentoCard className="md:col-span-3 md:row-span-1">
+          <HandoffCard onBuild={onBuild} />
         </BentoCard>
       </motion.div>
     </section>
@@ -320,15 +307,37 @@ function BentoCard({ className, children }) {
     >
       <Card
         className={cn(
-          "h-full overflow-hidden relative",
+          "h-full overflow-hidden relative group/bento",
           "shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)]",
-          "transition-shadow duration-300 hover:shadow-md",
+          "transition-all duration-300 hover:shadow-md hover:border-primary/30",
           className
         )}
       >
-        {children}
+        {/* Soft primary glow on hover */}
+        <div className="pointer-events-none absolute inset-0 opacity-0 group-hover/bento:opacity-100 transition-opacity duration-300 bg-[radial-gradient(circle_at_50%_0%,hsl(var(--primary)/0.06),transparent_70%)]" />
+        <div className="relative h-full">{children}</div>
       </Card>
     </motion.div>
+  );
+}
+
+function HandoffCard({ onBuild }) {
+  return (
+    <div className="p-5 sm:p-6 flex flex-col gap-3 h-full justify-between">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
+          <MagicWandIcon className="h-5 w-5 text-accent-foreground" />
+        </div>
+        <div>
+          <p className="text-sm font-medium">ZIP, StackBlitz, or GitHub.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">One click handoff.</p>
+        </div>
+      </div>
+      <Button size="sm" onClick={onBuild} className="self-start">
+        Try it now
+        <ArrowRightIcon className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }
 
@@ -384,61 +393,59 @@ function TerminalPreview() {
 
 function ArchitectureIllustration() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const inView = useInView(ref, { amount: 0.3 });
 
   return (
     <div ref={ref} className="h-full w-full flex flex-col p-5 sm:p-7">
       <Badge variant="muted" className="mb-3 self-start">Architecture</Badge>
-      <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">
-        Diagrams generated alongside the code.
+      <h3 className="text-lg sm:text-xl font-semibold tracking-tight">
+        Diagrams generated with the code.
       </h3>
-      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+      <p className="mt-1.5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
         Mermaid renders inline so you see the system before any line of code lands.
       </p>
 
-      <div className="flex-1 mt-4 grid place-items-center min-h-[140px]">
+      <div className="flex-1 mt-3 grid place-items-center min-h-[120px]">
         <svg
           viewBox="0 0 320 140"
           className="w-full max-w-[320px] h-auto"
           fill="none"
           stroke="currentColor"
         >
-          {/* edges (drawn first so nodes overlap them) */}
+          {/* edges with continuously animated dash flow */}
           <motion.path
             d="M 60 70 L 145 70"
             stroke="hsl(var(--muted-foreground))"
             strokeWidth="1.5"
             strokeDasharray="4 4"
-            initial={{ pathLength: 0 }}
-            animate={inView ? { pathLength: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            animate={inView ? { strokeDashoffset: [0, -16] } : {}}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
           />
           <motion.path
             d="M 175 70 L 260 70"
             stroke="hsl(var(--muted-foreground))"
             strokeWidth="1.5"
             strokeDasharray="4 4"
-            initial={{ pathLength: 0 }}
-            animate={inView ? { pathLength: 1 } : {}}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            animate={inView ? { strokeDashoffset: [0, -16] } : {}}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "linear", delay: 0.3 }}
           />
 
           {/* nodes */}
-          <NodeBlock x={20} y={50} w={40} label="Idea"   inView={inView} delay={0.0} />
-          <NodeBlock x={145} y={50} w={30} label="AI"    inView={inView} delay={0.3} primary />
-          <NodeBlock x={260} y={50} w={42} label="Repo" inView={inView} delay={0.6} />
+          <NodeBlock x={20}  y={50} w={40} label="Idea"  inView={inView} delay={0.0} />
+          <NodeBlock x={145} y={50} w={30} label="AI"    inView={inView} delay={0.3} primary pulse />
+          <NodeBlock x={260} y={50} w={42} label="Repo"  inView={inView} delay={0.6} />
 
           {/* travelling pulse */}
           {inView && (
             <motion.circle
-              r="3"
+              r="3.5"
               fill="hsl(var(--primary))"
               animate={{
                 cx: [60, 145, 260, 60],
                 cy: [70, 70, 70, 70],
                 opacity: [0, 1, 1, 0],
               }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary)))" }}
             />
           )}
@@ -448,14 +455,14 @@ function ArchitectureIllustration() {
   );
 }
 
-function NodeBlock({ x, y, w, label, inView, delay, primary }) {
+function NodeBlock({ x, y, w, label, inView, delay, primary, pulse }) {
   return (
     <motion.g
       initial={{ opacity: 0, y: 6 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
     >
-      <rect
+      <motion.rect
         x={x}
         y={y}
         width={w}
@@ -465,6 +472,8 @@ function NodeBlock({ x, y, w, label, inView, delay, primary }) {
         fill={primary ? "hsl(var(--primary) / 0.15)" : "hsl(var(--card))"}
         stroke={primary ? "hsl(var(--primary))" : "hsl(var(--border))"}
         strokeWidth="1.2"
+        animate={pulse && inView ? { opacity: [0.7, 1, 0.7] } : {}}
+        transition={pulse ? { duration: 2, repeat: Infinity, ease: "easeInOut" } : {}}
       />
       <text
         x={x + w / 2}
@@ -733,7 +742,7 @@ function IllustrationTile({ badge, title, desc, Illustration, Icon }) {
 
 function IdeaIllustration() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const inView = useInView(ref, { amount: 0.3 });
   return (
     <svg ref={ref} viewBox="0 0 240 120" className="w-full h-full" fill="none">
       {/* speech bubble */}
@@ -742,42 +751,53 @@ function IdeaIllustration() {
         fill="hsl(var(--card))"
         stroke="hsl(var(--border))"
         strokeWidth="1.2"
-        initial={{ opacity: 0, y: 6 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.45, delay: 0.05 }}
+        animate={inView ? { y: [36, 32, 36] } : {}}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.path
         d="M 50 80 L 56 90 L 64 80 Z"
         fill="hsl(var(--card))"
         stroke="hsl(var(--border))"
         strokeWidth="1.2"
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: 1 } : {}}
-        transition={{ duration: 0.4, delay: 0.18 }}
+        animate={inView ? { y: [0, -4, 0] } : {}}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* idea text rows */}
+      {/* cycling text rows */}
       <motion.rect x="34" y="46" width="60" height="6" rx="3" fill="hsl(var(--muted-foreground)/0.45)"
-        initial={{ scaleX: 0, originX: 0 }} animate={inView ? { scaleX: 1 } : {}} transition={{ duration: 0.5, delay: 0.25 }} />
+        animate={inView ? { y: [46, 42, 46], width: [60, 80, 60] } : {}}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }} />
       <motion.rect x="34" y="58" width="96" height="6" rx="3" fill="hsl(var(--muted-foreground)/0.3)"
-        initial={{ scaleX: 0, originX: 0 }} animate={inView ? { scaleX: 1 } : {}} transition={{ duration: 0.5, delay: 0.4 }} />
+        animate={inView ? { y: [58, 54, 58], width: [96, 70, 96] } : {}}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} />
 
-      {/* spark */}
+      {/* pulsing spark */}
       <motion.g
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={inView ? { opacity: 1, scale: 1 } : {}}
-        transition={{ duration: 0.5, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        animate={inView ? { scale: [1, 1.12, 1] } : {}}
+        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
         style={{ transformOrigin: "180px 50px" }}
       >
         <circle cx="180" cy="50" r="22" fill="hsl(var(--primary)/0.18)" stroke="hsl(var(--primary))" strokeWidth="1.2" />
         <path d="M 180 38 L 180 62 M 168 50 L 192 50" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" />
       </motion.g>
+
+      {/* radiating ring */}
+      {inView && (
+        <motion.circle
+          cx="180" cy="50" r="22"
+          stroke="hsl(var(--primary))"
+          strokeWidth="1"
+          fill="none"
+          animate={{ r: [22, 36], opacity: [0.5, 0] }}
+          transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+        />
+      )}
     </svg>
   );
 }
 
 function FilesIllustration() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const inView = useInView(ref, { amount: 0.3 });
   const files = [
     { y: 22, w: 110 },
     { y: 44, w: 130 },
@@ -788,9 +808,14 @@ function FilesIllustration() {
     <svg ref={ref} viewBox="0 0 240 120" className="w-full h-full" fill="none">
       {files.map((f, i) => (
         <motion.g key={i}
-          initial={{ opacity: 0, x: -10 }}
-          animate={inView ? { opacity: 1, x: 0 } : {}}
-          transition={{ duration: 0.4, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+          animate={inView ? { opacity: [0.4, 1, 1, 0.4], x: [-4, 0, 0, -4] } : {}}
+          transition={{
+            duration: 4.4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.5,
+            times: [0, 0.2, 0.8, 1],
+          }}
         >
           <rect x="30" y={f.y} width={f.w} height="14" rx="4"
             fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" />
@@ -798,50 +823,62 @@ function FilesIllustration() {
           <rect x="50" y={f.y + 5} width={f.w - 30} height="4" rx="2" fill="hsl(var(--muted-foreground)/0.35)" />
         </motion.g>
       ))}
-      {/* a primary "writing" highlight on file 3 */}
-      <motion.rect
-        x="30" y="66" width="100" height="14" rx="4"
-        fill="none"
-        stroke="hsl(var(--primary))"
-        strokeWidth="1.4"
-        initial={{ opacity: 0 }}
-        animate={inView ? { opacity: [0, 1, 1, 0, 0] } : {}}
-        transition={{ duration: 2.4, delay: 0.6, repeat: Infinity, repeatDelay: 1.2 }}
-      />
+      {/* cycling highlight ring travels through each file */}
+      {inView && (
+        <motion.rect
+          x="30" width="100" height="14" rx="4"
+          fill="none"
+          stroke="hsl(var(--primary))"
+          strokeWidth="1.4"
+          animate={{
+            y: [22, 44, 66, 88, 22],
+            opacity: [1, 1, 1, 1, 0.6],
+          }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", times: [0, 0.25, 0.5, 0.75, 1] }}
+          style={{ filter: "drop-shadow(0 0 5px hsl(var(--primary) / 0.6))" }}
+        />
+      )}
     </svg>
   );
 }
 
 function ShipIllustration() {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const inView = useInView(ref, { amount: 0.3 });
   return (
     <svg ref={ref} viewBox="0 0 240 120" className="w-full h-full" fill="none">
-      {/* box */}
+      {/* gently floating box */}
       <motion.g
-        initial={{ opacity: 0, y: 8 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.5, delay: 0.1 }}
+        animate={inView ? { y: [0, -4, 0] } : {}}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
       >
         <rect x="58" y="42" width="74" height="58" rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1.2" />
         <path d="M 58 56 L 132 56" stroke="hsl(var(--border))" strokeWidth="1.2" />
         <rect x="86" y="38" width="18" height="6" rx="2" fill="hsl(var(--primary)/0.6)" />
       </motion.g>
-      {/* arrow up + sparkles */}
-      <motion.g
-        initial={{ opacity: 0, y: 10 }}
-        animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
-        <path d="M 170 78 L 196 52 M 184 52 L 196 52 L 196 64" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </motion.g>
-      {/* sparkles */}
-      {[{cx:152,cy:46}, {cx:208,cy:78}, {cx:140,cy:96}].map((p, i) => (
+
+      {/* arrow that pulses */}
+      <motion.path
+        d="M 170 78 L 196 52 M 184 52 L 196 52 L 196 64"
+        stroke="hsl(var(--primary))"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        animate={inView ? { x: [0, 4, 0], y: [0, -4, 0], opacity: [0.7, 1, 0.7] } : {}}
+        transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* continuously twinkling sparkles */}
+      {[
+        { cx: 152, cy: 46, d: 0.0 },
+        { cx: 208, cy: 78, d: 0.5 },
+        { cx: 140, cy: 96, d: 1.0 },
+        { cx: 220, cy: 38, d: 1.5 },
+      ].map((p, i) => (
         <motion.circle key={i} cx={p.cx} cy={p.cy} r="2"
           fill="hsl(var(--primary))"
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={inView ? { opacity: [0, 1, 0], scale: [0.5, 1, 0.5] } : {}}
-          transition={{ duration: 1.6, delay: 0.6 + i * 0.15, repeat: Infinity, repeatDelay: 1.4 }}
+          animate={inView ? { opacity: [0, 1, 0], scale: [0.5, 1.3, 0.5] } : {}}
+          transition={{ duration: 1.6, delay: p.d, repeat: Infinity, ease: "easeInOut" }}
         />
       ))}
     </svg>
