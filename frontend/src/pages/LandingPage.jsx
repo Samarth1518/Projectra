@@ -208,20 +208,28 @@ function Hero({ onBuild, onChat }) {
 
         <motion.h1
           variants={fadeUp} transition={easing}
-          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]"
+          className={cn(
+            "font-display font-semibold tracking-tight leading-[0.95]",
+            "text-4xl sm:text-6xl md:text-7xl lg:text-8xl"
+          )}
         >
-          From idea to a running repo,
+          From an <em className="italic text-primary font-normal">idea</em>
           <br className="hidden sm:block" />{" "}
-          <span className="text-primary">in under a minute.</span>
+          to a <em className="italic text-primary font-normal">running repo</em>,
+          <span className="block mt-1 sm:mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-display italic font-normal">
+            in under a minute.
+          </span>
         </motion.h1>
 
         <motion.p
           variants={fadeUp} transition={easing}
-          className="mt-5 sm:mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2"
+          className={cn(
+            "font-body mt-6 sm:mt-7 text-base sm:text-lg md:text-xl",
+            "text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2"
+          )}
         >
-          Projectra is the AI dev companion that turns a single sentence
-          into a complete project. Streamed file by file, ready to download
-          or run in StackBlitz.
+          The AI dev companion that turns a single sentence into a complete
+          project. Streamed file by file, ready to download or run in StackBlitz.
         </motion.p>
 
         <motion.div

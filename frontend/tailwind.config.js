@@ -66,6 +66,8 @@ export default {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "monospace"],
         serif: ["var(--font-serif)", "serif"],
+        display: ["'Playfair Display'", "Georgia", "serif"],
+        body: ["'Source Sans 3'", "Inter", "system-ui", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {
