@@ -8,6 +8,8 @@ import CodeViewer from "../components/build/CodeViewer";
 import ArchitectureDiagram from "../components/build/ArchitectureDiagram";
 import StageStepper from "../components/build/StageStepper";
 import ResultsBar from "../components/build/ResultsBar";
+import CritiqueDrawer from "../components/build/CritiqueDrawer";
+import VoiceInputButton from "../components/build/VoiceInputButton";
 
 const STACK_OPTIONS = [
   { value: "auto", label: "Auto (let AI choose)" },
@@ -21,6 +23,7 @@ const STACK_OPTIONS = [
 export default function BuildPage() {
   const [idea, setIdea] = useState("");
   const [stack, setStack] = useState("auto");
+  const [critiqueOpen, setCritiqueOpen] = useState(false);
   const {
     status, stage, summary, mermaid, files, manifest, activeFile,
     projectId, error, build, cancel, setActiveFile,
@@ -63,6 +66,7 @@ export default function BuildPage() {
             disabled={isBusy}
             className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 focus:border-neon-blue/50 outline-none text-sm placeholder:text-text-muted transition-colors disabled:opacity-60"
           />
+          <VoiceInputButton onTranscript={setIdea} disabled={isBusy} />
           <select
             value={stack}
             onChange={(e) => setStack(e.target.value)}
@@ -136,9 +140,17 @@ export default function BuildPage() {
           projectId={projectId}
           files={files}
           stack={null /* not yet wired through; using detect-from-files heuristic */}
-          onCritique={() => {/* TODO: hook to chat critique mode */}}
+          onCritique={() => setCritiqueOpen(true)}
         />
       </footer>
+
+      <CritiqueDrawer
+        open={critiqueOpen}
+        onClose={() => setCritiqueOpen(false)}
+        summary={summary}
+        stack={null}
+        manifest={manifest}
+      />
     </div>
   );
 }
