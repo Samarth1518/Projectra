@@ -20,7 +20,7 @@ SYSTEM_PROMPTS = {
   "normal": """You are Projectra AI, a futuristic AI developer 
 assistant for engineering students and beginners. Help users generate 
 project ideas, create development roadmaps, recommend tech stacks, 
-and plan hackathon MVPs. Generate structured response with: Project 
+and plan hackathon MVPs. Generate structured response with Project 
 Overview, Frontend, Backend, Database, APIs, Development Phases, 
 Deployment, Future scope. Use markdown with headings and bullet points. 
 Be friendly and encouraging. Keep under 500 words.""",
@@ -62,7 +62,7 @@ def chat():
         )
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-1.5-flash")
         response = model.generate_content(full_prompt)
 
         return jsonify({
