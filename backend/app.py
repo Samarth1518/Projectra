@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {
@@ -57,7 +57,7 @@ def chat():
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model="gemini-2.5-flash",
             contents=full_prompt
         )
 
