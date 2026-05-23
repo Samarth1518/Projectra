@@ -1,43 +1,62 @@
 # Projectra AI
 
-> From idea to deployment.
+> From idea to a running repo, in under a minute.
 
 ## 🌐 Live Demo
 **[https://projectra-nu.vercel.app](https://projectra-nu.vercel.app)**
 
 ## 📌 About
-Projectra AI is a Gemini-powered AI developer assistant 
-built for engineering students, hackathon participants, 
-and beginners. Get complete project roadmaps, tech stack 
-recommendations, and hackathon MVP plans — instantly.
+Projectra AI is a Gemini-powered AI developer assistant built for
+engineering students, hackathon participants, and beginners. Two
+surfaces:
+
+- **Chat Mode** — ask for project roadmaps, hackathon MVPs, tech-stack
+  recommendations, beginner walk-throughs. Real token-by-token SSE
+  streaming.
+- **Build Mode** *(flagship)* — type one sentence, watch the AI
+  generate a complete, runnable repo in front of you: architecture
+  diagram, file tree, source code streaming into each file, then a
+  one-click ZIP / StackBlitz preview / brutally honest AI critique.
 
 Built for the **GDG PESCE Mandya — Build Your Own Chatbot** challenge.
 
 ## ✨ Features
 
-- 🧠 **AI Project Roadmaps** — Detailed development plans for any project idea
-- ⚡ **Hackathon Mode** — MVP-focused guidance for time-constrained builds
-- 🛠 **Tech Stack Advisor** — Opinionated recommendations based on skill level
-- 🎓 **Beginner Mode** — Student-friendly explanations and step-by-step guidance
-- 💬 **Streaming Responses** — Word by word streaming like ChatGPT
-- 📋 **Copy Responses** — One click copy on any AI response
+### Build Mode (`/build`)
+- ⚡ **Architect phase** — Gemini emits a structured plan (summary,
+  Mermaid diagram, file manifest) under a strict JSON schema.
+- 🧱 **Coder phase** — per-file streaming generation. Each file
+  appears in the tree, then streams its code into the viewer.
+- 📦 **Download ZIP** — the generated project, archived server-side.
+- 🚀 **Open in StackBlitz** — one click boots a live preview.
+- 🧑‍⚖️ **AI Critique** — second Gemini persona scores the generated
+  repo (novelty / completeness / wow / story) and gives 3 actionable
+  improvements.
+- 🎙️ **Voice input** — Web Speech API mic for the idea field.
+
+### Chat Mode (`/chat`)
+- 🧠 AI project roadmaps · ⚡ Hackathon Mode · 🛠 Tech Stack Advisor ·
+  🎓 Beginner Mode
+- 💬 **Real SSE streaming** — tokens arrive as Gemini produces them
+- 🔑 **Multi-key rotation** — comma-separated `GEMINI_API_KEYS`
+  rotate transparently on 429 / invalid-key errors
 
 ## 🛠 Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React, Tailwind CSS, Framer Motion |
-| Backend | Python, Flask |
-| AI | Google Gemini API (gemini-2.0-flash-lite) |
-| Frontend Hosting | Vercel |
-| Backend Hosting | Render |
+| Frontend | React 18, Vite, Tailwind, Framer Motion, react-syntax-highlighter, mermaid, @stackblitz/sdk |
+| Backend | Python 3.11, Flask, google-genai SDK |
+| AI | Google Gemini (gemini-2.5-flash) |
+| Hosting | Vercel (frontend) + Render (backend, gunicorn gthread) |
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+
 - Python 3.10+
-- Google Gemini API key from [aistudio.google.com](https://aistudio.google.com)
+- One or more Google Gemini API keys from
+  [aistudio.google.com](https://aistudio.google.com)
 
 ### Backend Setup
 ```bash
@@ -47,9 +66,9 @@ venv\Scripts\activate        # Windows
 source venv/bin/activate     # Mac/Linux
 pip install -r requirements.txt
 cp .env.example .env
-# Add your GEMINI_API_KEY to .env
+# Edit .env and set GEMINI_API_KEYS=key1,key2,key3
 python app.py
-# Backend runs at http://localhost:5000
+# Backend on http://localhost:5000
 ```
 
 ### Frontend Setup
@@ -58,23 +77,57 @@ cd frontend
 npm install
 # Create .env with: VITE_API_URL=http://localhost:5000
 npm run dev
-# Frontend runs at http://localhost:3000
+# Frontend on http://localhost:3000
 ```
 
+### Try Build Mode
+1. Open `http://localhost:3000/build`
+2. Type *"a single-page habit tracker"*, leave stack on **Auto**
+3. Click **Build** (or press the mic and speak the idea)
+4. Watch the file tree grow and code stream in
+5. Hit **Download ZIP** / **Open in StackBlitz** / **Critique**
+
 ## 📁 Project Structure
+```
 projectra-ai/
 ├── backend/
-│   ├── app.py              ← Flask + Gemini API
+│   ├── app.py              ← Flask + /api/chat (SSE) + /api/agent/build
+│   ├── agent.py            ← Architect (response_schema) + Coder phases
+│   ├── render.yaml
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/
 │   ├── src/
-│   │   ├── components/     ← UI components
-│   │   ├── pages/          ← Landing + Chat pages
-│   │   ├── hooks/          ← useChat state management
-│   │   └── utils/
+│   │   ├── App.jsx                       ← routes: /, /chat, /build
+│   │   ├── pages/
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── ChatDashboard.jsx
+│   │   │   └── BuildPage.jsx
+│   │   ├── components/
+│   │   │   ├── Sidebar.jsx, ChatInput.jsx, MessageBubble.jsx, …
+│   │   │   └── build/
+│   │   │       ├── FileTree.jsx
+│   │   │       ├── CodeViewer.jsx
+│   │   │       ├── ArchitectureDiagram.jsx  (mermaid)
+│   │   │       ├── StageStepper.jsx
+│   │   │       ├── ResultsBar.jsx           (ZIP / StackBlitz / Critique)
+│   │   │       ├── CritiqueDrawer.jsx
+│   │   │       └── VoiceInputButton.jsx
+│   │   └── hooks/
+│   │       ├── useChat.js                 ← SSE reader for /api/chat
+│   │       └── useAgentBuild.js           ← typed SSE for /api/agent/build
 │   └── package.json
 └── README.md
+```
+
+## 🔌 API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET`  | `/api/health` | Returns `{status, keys: <count>}` |
+| `POST` | `/api/chat` | SSE stream. Body: `{message, mode}` where mode ∈ `normal\|hackathon\|beginner\|stack\|critique` |
+| `POST` | `/api/agent/build` | SSE stream. Body: `{idea, stack}`. Emits `plan / diagram / manifest / architect_done / file_start / file_chunk / file_end / done / error` |
+| `GET`  | `/api/project/<id>/zip` | Downloads the generated project as a ZIP |
 
 ## 🔑 Environment Variables
 
@@ -88,12 +141,15 @@ GEMINI_API_KEYS=key1,key2,key3
 ```
 
 **Frontend (.env):**
+```
 VITE_API_URL=http://localhost:5000
+```
 
 ## 🌐 Deployment
 
 - Frontend deployed on **Vercel**
-- Backend deployed on **Render**
+- Backend deployed on **Render** (gunicorn gthread, 8 threads, 120s
+  timeout — supports concurrent SSE streams)
 - Live at: [https://projectra-nu.vercel.app](https://projectra-nu.vercel.app)
 
 ### Deploying to Render
@@ -109,6 +165,11 @@ multi-key rotation:
 
 `GEMINI_API_KEY` (single key) is kept as a fallback for backward
 compatibility.
+
+## 🤖 The recursion
+
+> *We built an AI that builds hackathon projects. We used it to build
+> itself. We're submitting it to win the hackathon.*
 
 ## 👤 Author
 **Samarth N G**
