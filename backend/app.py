@@ -50,7 +50,7 @@ tables in markdown. Be opinionated and decisive. Under 400 words."""
 
 @app.route("/api/health")
 def health():
-    return {"status": "ok", "model": "gemini-1.5-flash"}
+    return {"status": "ok", "model": "models/gemini-1.5-flash"}
 
 @app.route("/api/ping")
 def ping():
@@ -68,7 +68,7 @@ def chat():
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="models/gemini-1.5-flash",
             contents=full_prompt
         )
 
