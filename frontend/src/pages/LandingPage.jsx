@@ -47,12 +47,12 @@ const easing = { duration: 0.5, ease: [0.22, 1, 0.36, 1] };
 /* ---------- content ---------- */
 
 const FEATURES = [
-  { icon: MagicWandIcon,     title: "Build Mode",      desc: "Describe a project. Get a runnable repo with files streaming in real time." },
-  { icon: ChatBubbleIcon,    title: "AI Roadmaps",     desc: "Detailed development plans tailored to your idea, stack, and timeline." },
-  { icon: LightningBoltIcon, title: "Hackathon Mode",  desc: "MVP-focused guidance for sprints. Skip lists, time breakdowns, fastest stacks." },
-  { icon: LayersIcon,        title: "Stack Advisor",   desc: "Opinionated recommendations with pros, cons, and clear final picks." },
-  { icon: ReaderIcon,        title: "Beginner Mode",   desc: "Friendly explanations, numbered steps, beginner-safe tooling defaults." },
-  { icon: CodeIcon,          title: "AI Critique",     desc: "A second AI judges your generated repo and suggests concrete improvements." },
+  { Illustration: BuildModeIllustration,  icon: MagicWandIcon,     title: "Build Mode",      desc: "Describe a project. Get a runnable repo with files streaming in real time." },
+  { Illustration: RoadmapsIllustration,   icon: ChatBubbleIcon,    title: "AI Roadmaps",     desc: "Detailed development plans tailored to your idea, stack, and timeline." },
+  { Illustration: HackathonIllustration,  icon: LightningBoltIcon, title: "Hackathon Mode",  desc: "MVP-focused guidance for sprints. Skip lists, time breakdowns, fastest stacks." },
+  { Illustration: StackIllustration,      icon: LayersIcon,        title: "Stack Advisor",   desc: "Opinionated recommendations with pros, cons, and clear final picks." },
+  { Illustration: BeginnerIllustration,   icon: ReaderIcon,        title: "Beginner Mode",   desc: "Friendly explanations, numbered steps, beginner-safe tooling defaults." },
+  { Illustration: CritiqueIllustration,   icon: CodeIcon,          title: "AI Critique",     desc: "A second AI judges your generated repo and suggests concrete improvements." },
 ];
 
 const STEPS = [
@@ -108,16 +108,52 @@ export default function LandingPage() {
   );
 }
 
+/* ---------- hero accent (subtle looping shimmer on the italic words) ---------- */
+
+function HeroAccent({ children, delay = 0 }) {
+  return (
+    <motion.em
+      className="inline-block italic font-semibold relative text-primary"
+      animate={{
+        textShadow: [
+          "0 0 0px hsl(var(--primary) / 0)",
+          "0 0 14px hsl(var(--primary) / 0.45)",
+          "0 0 0px hsl(var(--primary) / 0)",
+        ],
+      }}
+      transition={{
+        duration: 3.2,
+        repeat: Infinity,
+        ease: "easeInOut",
+        delay,
+      }}
+    >
+      {children}
+    </motion.em>
+  );
+}
+
 /* ---------- nav ---------- */
 
 function Navbar({ onLaunch, onBuild }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 grid grid-cols-[auto_1fr_auto] md:grid-cols-3 items-center gap-2">
-        <Link to="/" className="flex items-center gap-2 shrink-0 justify-self-start">
-          <div className="h-7 w-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
+        <Link to="/" className="flex items-center gap-2 shrink-0 justify-self-start group">
+          <motion.div
+            className="h-7 w-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center"
+            animate={{
+              boxShadow: [
+                "0 0 0px hsl(var(--primary) / 0)",
+                "0 0 14px hsl(var(--primary) / 0.35)",
+                "0 0 0px hsl(var(--primary) / 0)",
+              ],
+            }}
+            transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ rotate: 6, scale: 1.05 }}
+          >
             <span className="text-primary font-bold text-sm">P</span>
-          </div>
+          </motion.div>
           <span className="font-semibold text-sm tracking-tight">Projectra</span>
         </Link>
 
@@ -209,14 +245,14 @@ function Hero({ onBuild, onChat }) {
         <motion.h1
           variants={fadeUp} transition={easing}
           className={cn(
-            "font-display font-semibold tracking-tight leading-[0.95]",
+            "font-semibold tracking-tight leading-[0.95]",
             "text-4xl sm:text-6xl md:text-7xl lg:text-8xl"
           )}
         >
-          From an <em className="italic text-primary font-normal">idea</em>
+          From an <HeroAccent>idea</HeroAccent>
           <br className="hidden sm:block" />{" "}
-          to a <em className="italic text-primary font-normal">running repo</em>,
-          <span className="block mt-1 sm:mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-display italic font-normal">
+          to a <HeroAccent delay={0.4}>running repo</HeroAccent>,
+          <span className="block mt-1 sm:mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground italic font-normal">
             in under a minute.
           </span>
         </motion.h1>
@@ -224,7 +260,7 @@ function Hero({ onBuild, onChat }) {
         <motion.p
           variants={fadeUp} transition={easing}
           className={cn(
-            "font-body mt-6 sm:mt-7 text-base sm:text-lg md:text-xl",
+            "mt-6 sm:mt-7 text-base sm:text-lg md:text-xl",
             "text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2"
           )}
         >
@@ -237,9 +273,9 @@ function Hero({ onBuild, onChat }) {
           className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
         >
           <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: "spring", damping: 18, stiffness: 280 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", damping: 22, stiffness: 300 }}
             className="relative w-full sm:w-auto group/cta"
           >
             {/* expanding chartreuse halo */}
@@ -256,7 +292,7 @@ function Hero({ onBuild, onChat }) {
               onClick={onBuild}
               className={cn(
                 "relative w-full sm:w-auto overflow-hidden",
-                "hover:shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] hover:-translate-y-1"
+                "hover:shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.55)]"
               )}
             >
               {/* shimmer sweep */}
@@ -272,9 +308,9 @@ function Hero({ onBuild, onChat }) {
           </motion.div>
 
           <motion.div
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: "spring", damping: 18, stiffness: 280 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", damping: 22, stiffness: 300 }}
             className="w-full sm:w-auto"
           >
             <Button
@@ -622,12 +658,15 @@ function FeaturesSection() {
   return (
     <section id="features" className="px-4 sm:px-6 py-20 sm:py-24 border-t border-border/60">
       <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}
         variants={stagger}
         className="mx-auto max-w-6xl"
       >
         <motion.div variants={fadeUp} transition={easing} className="max-w-2xl mb-10 sm:mb-12">
-          <Badge variant="muted" className="mb-3">Features</Badge>
+          <Badge variant="muted" className="mb-3">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            Features
+          </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
             Six modes, one chat box.
           </h2>
@@ -639,20 +678,30 @@ function FeaturesSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {FEATURES.map((f) => {
             const Icon = f.icon;
+            const Illustration = f.Illustration;
             return (
               <motion.div
                 key={f.title}
                 variants={fadeUp}
                 transition={easing}
-                whileHover={{ y: -2 }}
+                whileHover={{ y: -3 }}
                 className="h-full"
               >
-                <Card className="h-full p-5 sm:p-6 shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)] transition-shadow hover:shadow-md">
-                  <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center mb-4 transition-transform duration-300 hover:rotate-6">
-                    <Icon className="h-4 w-4 text-accent-foreground" />
+                <Card
+                  className={cn(
+                    "h-full p-5 sm:p-6 flex flex-col overflow-hidden",
+                    "shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)]",
+                    "transition-all duration-300 hover:shadow-md hover:border-primary/30"
+                  )}
+                >
+                  <div className="h-28 sm:h-32 -mx-1 mb-4 rounded-md bg-muted/40 border border-border overflow-hidden flex items-center justify-center">
+                    {Illustration ? <Illustration /> : null}
                   </div>
-                  <h3 className="font-semibold text-base">{f.title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <Icon className="h-3.5 w-3.5 text-primary" />
+                    <h3 className="font-semibold text-base">{f.title}</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </Card>
               </motion.div>
             );
@@ -660,6 +709,233 @@ function FeaturesSection() {
         </div>
       </motion.div>
     </section>
+  );
+}
+
+/* ---------- feature illustrations (all loop continuously) ---------- */
+
+function BuildModeIllustration() {
+  // Four file rows, each cycles through a typing highlight.
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  const rows = [{ y: 18, w: 90 }, { y: 38, w: 130 }, { y: 58, w: 110 }, { y: 78, w: 80 }];
+  return (
+    <svg ref={ref} viewBox="0 0 240 110" className="w-full h-full" fill="none">
+      {rows.map((r, i) => (
+        <g key={i}>
+          <rect x="22" y={r.y} width="10" height="10" rx="2" fill="hsl(var(--primary)/0.7)" />
+          <motion.rect
+            x="38" y={r.y + 3} height="4" rx="2" fill="hsl(var(--muted-foreground)/0.4)"
+            animate={inView ? { width: [0, r.w, r.w, 0] } : {}}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: i * 0.4, times: [0, 0.3, 0.85, 1] }}
+          />
+        </g>
+      ))}
+      {/* cycling cursor */}
+      {inView && (
+        <motion.rect
+          width="2" height="6" fill="hsl(var(--primary))"
+          animate={{ y: [19, 39, 59, 79, 19], opacity: [1, 1, 1, 1, 0.6] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", times: [0, 0.25, 0.5, 0.75, 1] }}
+          x="170"
+        />
+      )}
+    </svg>
+  );
+}
+
+function RoadmapsIllustration() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  const points = [{ x: 40, label: "v0" }, { x: 100, label: "v1" }, { x: 160, label: "v2" }, { x: 210, label: "v3" }];
+  return (
+    <svg ref={ref} viewBox="0 0 240 110" className="w-full h-full" fill="none">
+      {/* timeline */}
+      <motion.line
+        x1="30" y1="55" x2="220" y2="55"
+        stroke="hsl(var(--border))" strokeWidth="1.2" strokeDasharray="4 4"
+        animate={inView ? { strokeDashoffset: [0, -16] } : {}}
+        transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+      />
+      {points.map((p, i) => (
+        <g key={i}>
+          <circle cx={p.x} cy="55" r="5" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1.2" />
+          <text x={p.x} y="78" textAnchor="middle" fontSize="9" fill="hsl(var(--muted-foreground))" fontFamily="Inter">
+            {p.label}
+          </text>
+        </g>
+      ))}
+      {/* travelling dot */}
+      {inView && (
+        <motion.circle
+          r="4" cy="55"
+          fill="hsl(var(--primary))"
+          animate={{ cx: [40, 100, 160, 210, 40] }}
+          transition={{ duration: 4.4, repeat: Infinity, ease: "easeInOut" }}
+          style={{ filter: "drop-shadow(0 0 5px hsl(var(--primary)))" }}
+        />
+      )}
+    </svg>
+  );
+}
+
+function HackathonIllustration() {
+  // A circular timer that fills then resets.
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  const R = 32;
+  const C = 2 * Math.PI * R;
+  return (
+    <svg ref={ref} viewBox="0 0 240 110" className="w-full h-full" fill="none">
+      <g transform="translate(120 55)">
+        <circle r={R} stroke="hsl(var(--border))" strokeWidth="2.5" fill="none" />
+        {inView && (
+          <motion.circle
+            r={R}
+            stroke="hsl(var(--primary))"
+            strokeWidth="2.5"
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            transform="rotate(-90)"
+            animate={{ strokeDashoffset: [C, 0] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+            style={{ filter: "drop-shadow(0 0 4px hsl(var(--primary) / 0.5))" }}
+          />
+        )}
+        <text textAnchor="middle" dy="-2" fontSize="14" fontWeight="600" fill="hsl(var(--foreground))" fontFamily="Inter">12h</text>
+        <text textAnchor="middle" dy="12" fontSize="8" fill="hsl(var(--muted-foreground))" fontFamily="Inter">sprint</text>
+      </g>
+      {/* ticking dot at 12 o'clock */}
+      {inView && (
+        <motion.circle
+          cx="120" r="2"
+          fill="hsl(var(--primary))"
+          animate={{ cy: [21, 23, 21] }}
+          transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+    </svg>
+  );
+}
+
+function StackIllustration() {
+  // Stacked layer cards that swap order on a loop.
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  // four layers; each cycles its y position to create a "shuffle" effect
+  return (
+    <svg ref={ref} viewBox="0 0 240 110" className="w-full h-full" fill="none">
+      {[
+        { fill: "hsl(var(--card))", stroke: "hsl(var(--border))", offset: 0, label: "Frontend" },
+        { fill: "hsl(var(--accent))", stroke: "hsl(var(--accent-foreground)/0.3)", offset: 1, label: "Backend" },
+        { fill: "hsl(var(--card))", stroke: "hsl(var(--border))", offset: 2, label: "Database" },
+        { fill: "hsl(var(--primary)/0.18)", stroke: "hsl(var(--primary))", offset: 3, label: "Deploy" },
+      ].map((l, i) => (
+        <motion.g
+          key={i}
+          animate={inView ? { y: [0, -4, 0] } : {}}
+          transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
+        >
+          <rect
+            x={50 + l.offset * 7}
+            y={22 + l.offset * 14}
+            width="140"
+            height="20"
+            rx="4"
+            fill={l.fill}
+            stroke={l.stroke}
+            strokeWidth="1.2"
+          />
+          <text
+            x={60 + l.offset * 7}
+            y={36 + l.offset * 14}
+            fontSize="9"
+            fontFamily="Inter"
+            fontWeight="500"
+            fill={i === 3 ? "hsl(var(--primary))" : "hsl(var(--foreground))"}
+          >
+            {l.label}
+          </text>
+        </motion.g>
+      ))}
+    </svg>
+  );
+}
+
+function BeginnerIllustration() {
+  // 1 - 2 - 3 numbered circles connected by a wavy path with a moving dot.
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  const stops = [{ cx: 40, n: "1" }, { cx: 120, n: "2" }, { cx: 200, n: "3" }];
+  return (
+    <svg ref={ref} viewBox="0 0 240 110" className="w-full h-full" fill="none">
+      <motion.path
+        d="M 40 55 C 70 25, 90 25, 120 55 S 170 85, 200 55"
+        stroke="hsl(var(--border))"
+        strokeWidth="1.4"
+        strokeDasharray="3 3"
+        animate={inView ? { strokeDashoffset: [0, -12] } : {}}
+        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+      />
+      {stops.map((s, i) => (
+        <g key={i}>
+          <circle cx={s.cx} cy="55" r="12" fill="hsl(var(--card))" stroke="hsl(var(--primary))" strokeWidth="1.3" />
+          <text x={s.cx} y="59" textAnchor="middle" fontSize="11" fontWeight="600" fontFamily="Inter" fill="hsl(var(--primary))">
+            {s.n}
+          </text>
+        </g>
+      ))}
+      {/* travelling dot along the wavy path */}
+      {inView && (
+        <motion.circle
+          r="3"
+          fill="hsl(var(--primary))"
+          animate={{
+            offsetDistance: ["0%", "100%"],
+          }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            offsetPath: 'path("M 40 55 C 70 25, 90 25, 120 55 S 170 85, 200 55")',
+            offsetRotate: "0deg",
+            filter: "drop-shadow(0 0 4px hsl(var(--primary)))",
+          }}
+        />
+      )}
+    </svg>
+  );
+}
+
+function CritiqueIllustration() {
+  // Five star outlines that fill one by one, then a "9.2" score appears.
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.3 });
+  const starPath = "M 0 -7 L 1.6 -2.3 L 6.7 -2.3 L 2.6 0.8 L 4.1 5.7 L 0 2.8 L -4.1 5.7 L -2.6 0.8 L -6.7 -2.3 L -1.6 -2.3 Z";
+  return (
+    <svg ref={ref} viewBox="0 0 240 110" className="w-full h-full" fill="none">
+      {[0, 1, 2, 3, 4].map((i) => (
+        <motion.g
+          key={i}
+          transform={`translate(${44 + i * 38} 40)`}
+          animate={inView ? { fill: ["hsl(var(--muted-foreground)/0.3)", "hsl(var(--primary))", "hsl(var(--primary))", "hsl(var(--muted-foreground)/0.3)"] } : {}}
+          transition={{
+            duration: 3.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: i * 0.18,
+            times: [0, 0.25, 0.9, 1],
+          }}
+        >
+          <path d={starPath} stroke="hsl(var(--border))" strokeWidth="0.8" />
+        </motion.g>
+      ))}
+      <text x="120" y="84" textAnchor="middle" fontSize="11" fontWeight="600" fill="hsl(var(--foreground))" fontFamily="Inter">
+        9.2 / 10
+      </text>
+      <text x="120" y="98" textAnchor="middle" fontSize="8" fill="hsl(var(--muted-foreground))" fontFamily="Inter">
+        novelty score
+      </text>
+    </svg>
   );
 }
 
@@ -943,7 +1219,7 @@ function ShipIllustration() {
 
 function FooterSection() {
   return (
-    <footer className="px-4 sm:px-6 py-14 sm:py-16 border-t border-border/60 bg-muted/20">
+    <footer className="px-4 sm:px-6 pt-14 sm:pt-16 border-t border-border/60 bg-muted/20 relative overflow-hidden">
       <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8">
         <div className="col-span-2">
           <Link to="/" className="flex items-center gap-2">
@@ -1002,7 +1278,35 @@ function FooterSection() {
           <a href="#" className="hover:text-foreground transition-colors">Security</a>
         </div>
       </div>
+
+      {/* Huge Projectra wordmark, fading from low opacity at top to primary at the bottom. */}
+      <FooterWordmark />
     </footer>
+  );
+}
+
+function FooterWordmark() {
+  return (
+    <div className="relative w-full mt-12 sm:mt-16 -mb-6 sm:-mb-10 overflow-hidden select-none pointer-events-none">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+        aria-hidden
+        className="text-center font-semibold tracking-tighter leading-[0.85]"
+        style={{
+          fontSize: "clamp(72px, 19vw, 260px)",
+          backgroundImage:
+            "linear-gradient(to bottom, hsl(var(--foreground) / 0.02) 0%, hsl(var(--foreground) / 0.15) 35%, hsl(var(--primary) / 0.85) 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+        }}
+      >
+        Projectra
+      </motion.div>
+    </div>
   );
 }
 
