@@ -54,7 +54,7 @@ and decisive. Keep response under 500 words."""
 
 @app.route("/api/health")
 def health():
-    return {"status": "ok", "model": "gemini-2.0-flash"}
+    return {"status": "ok", "model": "gemini-1.5-flash-latest"}
 
 @app.route("/api/ping")
 def ping():
@@ -72,7 +72,7 @@ def chat():
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-1.5-flash-latest",
             contents=full_prompt
         )
 
