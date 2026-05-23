@@ -108,12 +108,125 @@ export default function LandingPage() {
   );
 }
 
+/* ---------- gemini logo (inline svg, Google brand gradient) ---------- */
+
+function GeminiLogo({ className = "h-3.5 w-3.5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      aria-label="Gemini"
+    >
+      <defs>
+        <linearGradient id="gemini-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#4285F4" />
+          <stop offset="50%" stopColor="#9168C0" />
+          <stop offset="100%" stopColor="#D96570" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M12 1.5 C 12.6 6 14.2 8.8 18.6 9.4 C 22.5 9.95 22.5 14.05 18.6 14.6 C 14.2 15.2 12.6 18 12 22.5 C 11.4 18 9.8 15.2 5.4 14.6 C 1.5 14.05 1.5 9.95 5.4 9.4 C 9.8 8.8 11.4 6 12 1.5 Z"
+        fill="url(#gemini-grad)"
+      />
+    </svg>
+  );
+}
+
+/* ---------- other brand logos used in the floating row ---------- */
+
+function GoogleLogo({ className = "h-6 w-6" }) {
+  return (
+    <svg viewBox="0 0 48 48" className={className} aria-label="Google">
+      <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.7 4.7-6.2 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z" />
+      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
+      <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.5-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.1 0-9.5-3.3-11.3-7.9l-6.6 5.1C9.5 39.6 16.2 44 24 44z" />
+      <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4 5.6l6.2 5.2C42.1 35 44 30 44 24c0-1.3-.1-2.6-.4-3.9z" />
+    </svg>
+  );
+}
+
+function GDGLogo({ className = "h-6 w-6" }) {
+  return (
+    <svg viewBox="0 0 48 24" className={className} aria-label="GDG">
+      <text x="2"  y="19" fontSize="18" fontWeight="700" fontFamily="Inter, sans-serif" fill="#4285F4">G</text>
+      <text x="17" y="19" fontSize="18" fontWeight="700" fontFamily="Inter, sans-serif" fill="#EA4335">D</text>
+      <text x="33" y="19" fontSize="18" fontWeight="700" fontFamily="Inter, sans-serif" fill="#34A853">G</text>
+    </svg>
+  );
+}
+
+function GithubBrand({ className = "h-6 w-6" }) {
+  return <GitHubLogoIcon className={className} />;
+}
+
+function ReactLogo({ className = "h-6 w-6" }) {
+  return (
+    <svg viewBox="-11.5 -10.23 23 20.46" className={className} aria-label="React">
+      <circle r="2.05" fill="#61DAFB" />
+      <g stroke="#61DAFB" strokeWidth="0.9" fill="none">
+        <ellipse rx="11" ry="4.2" />
+        <ellipse rx="11" ry="4.2" transform="rotate(60)" />
+        <ellipse rx="11" ry="4.2" transform="rotate(120)" />
+      </g>
+    </svg>
+  );
+}
+
+function VercelLogo({ className = "h-6 w-6" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-label="Vercel" fill="currentColor">
+      <path d="M12 2 L23 21 L1 21 Z" />
+    </svg>
+  );
+}
+
+/* ---------- floating brand logos around the hero (desktop only) ---------- */
+
+function FloatingLogo({ Logo, name, className, delay = 0, duration = 4 }) {
+  return (
+    <motion.div
+      aria-label={name}
+      title={name}
+      className={cn(
+        "absolute h-12 w-12 rounded-xl bg-card border border-border flex items-center justify-center",
+        "shadow-sm shadow-foreground/5",
+        "ring-1 ring-foreground/[0.02]",
+        className
+      )}
+      animate={{ y: [0, -12, 0], rotate: [0, 1.5, 0] }}
+      transition={{ duration, repeat: Infinity, ease: "easeInOut", delay }}
+    >
+      <Logo className="h-6 w-6" />
+    </motion.div>
+  );
+}
+
+function FloatingBrandLogos() {
+  return (
+    <div aria-hidden className="hidden lg:block pointer-events-none absolute inset-0 -z-[1]">
+      {/* Left column, top to bottom */}
+      <FloatingLogo Logo={GoogleLogo}  name="Google" className="top-36 left-[6%]"        delay={0.0} duration={4.2} />
+      <FloatingLogo Logo={GithubBrand} name="GitHub" className="top-1/2 left-[3%]"        delay={0.6} duration={4.6} />
+      <FloatingLogo Logo={ReactLogo}   name="React"  className="bottom-32 left-[8%]"      delay={1.2} duration={5.0} />
+      {/* Right column, top to bottom */}
+      <FloatingLogo Logo={GeminiLogo}  name="Gemini" className="top-36 right-[6%]"        delay={0.3} duration={4.4} />
+      <FloatingLogo Logo={GDGLogo}     name="GDG"    className="top-1/2 right-[3%]"       delay={0.9} duration={4.8} />
+      <FloatingLogo Logo={VercelLogo}  name="Vercel" className="bottom-32 right-[8%] text-foreground" delay={1.5} duration={5.2} />
+    </div>
+  );
+}
+
 /* ---------- hero accent (subtle looping shimmer on the italic words) ---------- */
 
 function HeroAccent({ children, delay = 0 }) {
   return (
     <motion.em
-      className="inline-block italic font-semibold relative text-primary"
+      className={cn(
+        "inline-block italic font-medium relative text-primary",
+        "font-display",
+        "underline decoration-primary/60 decoration-[3px] underline-offset-[0.18em]"
+      )}
       animate={{
         textShadow: [
           "0 0 0px hsl(var(--primary) / 0)",
@@ -231,14 +344,17 @@ function Hero({ onBuild, onChat }) {
         className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_45%_at_50%_30%,hsl(var(--primary)/0.07),transparent_70%)]"
       />
 
+      {/* Floating brand logos (Google, Gemini, GitHub, GDG, React, Vercel) */}
+      <FloatingBrandLogos />
+
       <motion.div
         initial="hidden" animate="visible" variants={stagger}
         className="mx-auto max-w-4xl text-center relative"
       >
         <motion.div variants={fadeUp} transition={easing}>
-          <Badge variant="outline" className="mb-6 px-3 py-1 text-xs bg-background/80 backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-            Gemini-powered. Built for hackathons.
+          <Badge variant="outline" className="mb-6 px-3 py-1 text-xs bg-background/80 backdrop-blur gap-1.5">
+            <GeminiLogo className="h-3 w-3" />
+            <span>Powered by Gemini. Built for hackathons.</span>
           </Badge>
         </motion.div>
 
@@ -252,7 +368,7 @@ function Hero({ onBuild, onChat }) {
           From an <HeroAccent>idea</HeroAccent>
           <br className="hidden sm:block" />{" "}
           to a <HeroAccent delay={0.4}>running repo</HeroAccent>,
-          <span className="block mt-1 sm:mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground italic font-normal">
+          <span className="block mt-1 sm:mt-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-muted-foreground font-normal">
             in under a minute.
           </span>
         </motion.h1>
@@ -341,14 +457,14 @@ function Hero({ onBuild, onChat }) {
 
 function BentoSection({ onBuild }) {
   return (
-    <section className="px-4 sm:px-6 pb-20 sm:pb-24">
+    <section className="px-4 sm:px-6 pb-16 sm:pb-20">
       <motion.div
         initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.1 }}
         variants={stagger}
         className={cn(
-          "mx-auto max-w-6xl grid gap-3 sm:gap-4",
+          "mx-auto max-w-5xl grid gap-3",
           "grid-cols-1 sm:grid-cols-2",
-          "md:grid-cols-6 md:auto-rows-[180px]"
+          "md:grid-cols-6 md:auto-rows-[150px]"
         )}
       >
         {/* Big hero card: terminal preview - 4 cols x 2 rows */}
@@ -394,7 +510,7 @@ function BentoCard({ className, children }) {
       variants={fadeUp}
       transition={easing}
       whileHover={{ y: -3 }}
-      className={cn("h-full min-h-[180px]", className)}
+      className={cn("h-full min-h-[150px]", className)}
     >
       <Card
         className={cn(
@@ -448,33 +564,32 @@ function TerminalPreview() {
   }, [phrases.length]);
 
   return (
-    <div className="flex flex-col h-full justify-between p-5 sm:p-7">
+    <div className="flex flex-col h-full justify-between p-4 sm:p-5">
       <div>
-        <Badge variant="muted" className="mb-3">Live streaming</Badge>
-        <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">
+        <Badge variant="muted" className="mb-2">Live streaming</Badge>
+        <h3 className="text-base sm:text-lg font-semibold tracking-tight">
           Watch your project assemble itself.
         </h3>
-        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          Architecture diagram, file tree, and per-file code arrive in real time. Click any file to see it stream.
+        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+          Architecture, file tree, and per-file code in real time.
         </p>
       </div>
 
-      <div className="mt-4 rounded-lg border border-border bg-muted/40 shadow-[inset_0_1px_0_hsl(var(--background))] p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
+      <div className="mt-3 rounded-lg border border-border bg-muted/40 shadow-[inset_0_1px_0_hsl(var(--background))] p-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
         <div className="text-primary">{"$ projectra build \"a todo app\""}</div>
         <div>plan: complete</div>
-        <div>diagram: rendered</div>
         <div>files: 5 queued</div>
-        <div className="text-foreground flex items-center min-h-[18px]">
+        <div className="text-foreground flex items-center min-h-[14px]">
           <motion.span
             key={active}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
           >
             {phrases[active]}
           </motion.span>
-          <span className="inline-block w-1.5 h-3 ml-1 bg-foreground align-middle animate-pulse" />
+          <span className="inline-block w-1 h-2.5 ml-1 bg-foreground align-middle animate-pulse" />
         </div>
       </div>
     </div>
@@ -1219,7 +1334,7 @@ function ShipIllustration() {
 
 function FooterSection() {
   return (
-    <footer className="px-4 sm:px-6 pt-14 sm:pt-16 border-t border-border/60 bg-muted/20 relative overflow-hidden">
+    <footer className="px-4 sm:px-6 pt-14 sm:pt-16 pb-2 border-t border-border/60 bg-muted/20 relative">
       <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8">
         <div className="col-span-2">
           <Link to="/" className="flex items-center gap-2">
@@ -1287,18 +1402,18 @@ function FooterSection() {
 
 function FooterWordmark() {
   return (
-    <div className="relative w-full mt-12 sm:mt-16 -mb-6 sm:-mb-10 overflow-hidden select-none pointer-events-none">
+    <div className="relative w-full mt-10 sm:mt-12 select-none pointer-events-none overflow-visible">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         aria-hidden
-        className="text-center font-semibold tracking-tighter leading-[0.85]"
+        className="text-center font-semibold tracking-tighter leading-[0.95] pb-2"
         style={{
-          fontSize: "clamp(72px, 19vw, 260px)",
+          fontSize: "clamp(48px, 13vw, 180px)",
           backgroundImage:
-            "linear-gradient(to bottom, hsl(var(--foreground) / 0.02) 0%, hsl(var(--foreground) / 0.15) 35%, hsl(var(--primary) / 0.85) 100%)",
+            "linear-gradient(to bottom, hsl(var(--foreground) / 0.04) 0%, hsl(var(--foreground) / 0.18) 35%, hsl(var(--primary) / 0.85) 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
