@@ -1,9 +1,58 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import json
 import os
+import threading
+import time
+
+import google.genai as genai
 from dotenv import load_dotenv
+from flask import Flask, Response, request, stream_with_context
+from flask_cors import CORS
 
 load_dotenv(override=True)
+
+
+def load_keys():
+    raw = os.getenv("GEMINI_API_KEYS")
+    if raw:
+        keys = [k.strip() for k in raw.split(",") if k.strip()]
+        if keys:
+            return keys
+    single = os.getenv("GEMINI_API_KEY")
+    return [single.strip()] if single and single.strip() else []
+
+
+class KeyPool:
+    QUOTA_COOLDOWN = 60
+    INVALID_COOLDOWN = 3600
+
+    def __init__(self, keys):
+        self._keys = keys
+        self._idx = 0
+        self._cooldown = {}
+        self._lock = threading.Lock()
+
+    def __len__(self):
+        return len(self._keys)
+
+    def acquire(self):
+        if not self._keys:
+            return None
+        now = time.time()
+        with self._lock:
+            for _ in range(len(self._keys)):
+                key = self._keys[self._idx % len(self._keys)]
+                self._idx = (self._idx + 1) % len(self._keys)
+                if self._cooldown.get(key, 0) <= now:
+                    return key
+        return None
+
+    def mark_failed(self, key, kind):
+        delay = self.QUOTA_COOLDOWN if kind == "quota" else self.INVALID_COOLDOWN
+        with self._lock:
+            self._cooldown[key] = time.time() + delay
+
+
+POOL = KeyPool(load_keys())
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {
@@ -14,65 +63,103 @@ CORS(app, resources={r"/api/*": {
 }})
 
 SYSTEM_PROMPTS = {
-  "normal": """You are Projectra AI, a futuristic AI developer 
-assistant for engineering students and beginners. Help users generate 
-project ideas, create development roadmaps, recommend tech stacks, 
-and plan hackathon MVPs. Generate structured response with Project 
-Overview, Frontend, Backend, Database, APIs, Development Phases, 
+  "normal": """You are Projectra AI, a futuristic AI developer
+assistant for engineering students and beginners. Help users generate
+project ideas, create development roadmaps, recommend tech stacks,
+and plan hackathon MVPs. Generate structured response with Project
+Overview, Frontend, Backend, Database, APIs, Development Phases,
 Deployment, Future scope. Use markdown. Keep under 400 words.""",
-  "hackathon": """You are Projectra AI in HACKATHON MODE. User has 
-12-48 hours to build an MVP. Suggest fastest tech stack. List only 
-core MVP features max 3-5. List what to SKIP. Give time breakdown. 
+  "hackathon": """You are Projectra AI in HACKATHON MODE. User has
+12-48 hours to build an MVP. Suggest fastest tech stack. List only
+core MVP features max 3-5. List what to SKIP. Give time breakdown.
 Under 300 words.""",
-  "beginner": """You are Projectra AI in BEGINNER MODE. Use simple 
-friendly language. Break into numbered steps. Suggest beginner-friendly 
+  "beginner": """You are Projectra AI in BEGINNER MODE. Use simple
+friendly language. Break into numbered steps. Suggest beginner-friendly
 tools only. Include How to start today section. Under 400 words.""",
-  "stack": """You are Projectra AI in TECH STACK ADVISOR mode. 
-Recommend Frontend, Backend, Database, Deployment with pros and cons. 
+  "stack": """You are Projectra AI in TECH STACK ADVISOR mode.
+Recommend Frontend, Backend, Database, Deployment with pros and cons.
 Give clear final recommendation. Use comparison tables. Under 400 words."""
 }
 
+
+def sse(payload):
+    return f"data: {json.dumps(payload)}\n\n"
+
+
 @app.route("/api/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "keys": len(POOL)}
 
-@app.route("/api/ping")  
+
+@app.route("/api/ping")
 def ping():
     return {"status": "alive"}
 
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
-    try:
-        import google.genai as genai
-        
-        api_key = os.getenv("GEMINI_API_KEY")
-        client = genai.Client(api_key=api_key)
-        
-        data = request.get_json()
-        user_message = data.get("message", "")
-        mode = data.get("mode", "normal")
-        system_prompt = SYSTEM_PROMPTS.get(
-            mode, SYSTEM_PROMPTS["normal"]
-        )
-        full_prompt = f"{system_prompt}\n\nUser: {user_message}"
+    data = request.get_json() or {}
+    user_message = data.get("message", "")
+    mode = data.get("mode", "normal")
+    system_prompt = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["normal"])
+    full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=full_prompt
-        )
+    def generate():
+        if len(POOL) == 0:
+            yield sse({"error": "No Gemini API keys configured.", "done": True})
+            return
 
-        return jsonify({
-            "response": response.text,
-            "status": "success"
-        })
+        for _ in range(len(POOL)):
+            key = POOL.acquire()
+            if not key:
+                yield sse({"error": "All API keys are rate-limited. Please try again shortly.", "done": True})
+                return
 
-    except Exception as e:
-        print(f"ERROR: {str(e)}")
-        return jsonify({
-            "response": "Something went wrong. Please try again.",
-            "status": "error",
-            "error": str(e)
-        }), 500
+            try:
+                client = genai.Client(api_key=key)
+                started = False
+                stream = client.models.generate_content_stream(
+                    model="gemini-2.5-flash",
+                    contents=full_prompt,
+                )
+                for chunk in stream:
+                    if chunk.text:
+                        started = True
+                        yield sse({"chunk": chunk.text})
+                yield sse({"done": True})
+                return
+
+            except genai.errors.ClientError as e:
+                if started:
+                    yield sse({"error": "Stream interrupted.", "done": True})
+                    return
+                msg = str(e)
+                if e.code == 429:
+                    POOL.mark_failed(key, "quota")
+                    continue
+                if e.code == 400 and "API_KEY_INVALID" in msg:
+                    POOL.mark_failed(key, "invalid")
+                    continue
+                yield sse({"error": msg, "done": True})
+                return
+            except Exception as e:
+                if started:
+                    yield sse({"error": "Stream interrupted.", "done": True})
+                    return
+                yield sse({"error": str(e), "done": True})
+                return
+
+        yield sse({"error": "All API keys are rate-limited. Please try again shortly.", "done": True})
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, threaded=True)

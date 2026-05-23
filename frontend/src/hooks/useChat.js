@@ -5,16 +5,11 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState("normal");
   const abortControllerRef = useRef(null);
-  const typewriterRef = useRef(null);
 
   const cancelRequest = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
-    }
-    if (typewriterRef.current) {
-      clearInterval(typewriterRef.current);
-      typewriterRef.current = null;
     }
   }, []);
 
@@ -30,42 +25,6 @@ export function useChat() {
     setMessages([]);
     setIsLoading(false);
   }, [cancelRequest]);
-
-  const typewriterEffect = useCallback((fullText, messageId) => {
-    const words = fullText.split(" ");
-    let currentIndex = 0;
-    let currentText = "";
-
-    typewriterRef.current = setInterval(() => {
-      if (currentIndex < words.length) {
-        currentText += (currentIndex === 0 ? "" : " ") + words[currentIndex];
-        currentIndex++;
-        
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === messageId
-              ? { 
-                  ...msg, 
-                  content: currentText,
-                  isStreaming: currentIndex < words.length
-                }
-              : msg
-          )
-        );
-      } else {
-        clearInterval(typewriterRef.current);
-        typewriterRef.current = null;
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === messageId
-              ? { ...msg, content: fullText, isStreaming: false }
-              : msg
-          )
-        );
-        setIsLoading(false);
-      }
-    }, 30);
-  }, []);
 
   const sendMessage = useCallback(async (text) => {
     if (!text.trim() || isLoading) return;
@@ -93,6 +52,24 @@ export function useChat() {
     setMessages(prev => [...prev, userMessage, aiMessage]);
     setIsLoading(true);
 
+    const finishMessage = (patch) => {
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === aiMessageId ? { ...msg, ...patch, isStreaming: false } : msg
+        )
+      );
+    };
+
+    const appendChunk = (chunk) => {
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === aiMessageId
+            ? { ...msg, content: msg.content + chunk }
+            : msg
+        )
+      );
+    };
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || ""}/api/chat`,
@@ -104,56 +81,82 @@ export function useChat() {
         }
       );
 
-      const data = await response.json();
-      
-      if (data.status === "error") {
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === aiMessageId
-              ? { 
-                  ...msg, 
-                  content: data.response,
-                  isStreaming: false 
-                }
-              : msg
-          )
-        );
+      if (!response.ok || !response.body) {
+        finishMessage({ content: "Connection error. Please try again." });
         setIsLoading(false);
         return;
       }
 
-      typewriterEffect(data.response, aiMessageId);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let receivedAny = false;
+      let errored = false;
 
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+
+        let idx;
+        while ((idx = buf.indexOf("\n\n")) !== -1) {
+          const frame = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          if (!frame.startsWith("data:")) continue;
+
+          let payload;
+          try {
+            payload = JSON.parse(frame.slice(5).trim());
+          } catch {
+            continue;
+          }
+
+          if (payload.error) {
+            errored = true;
+            if (receivedAny) {
+              setMessages(prev =>
+                prev.map(msg =>
+                  msg.id === aiMessageId
+                    ? { ...msg, content: `${msg.content}\n\n_${payload.error}_`, isStreaming: false }
+                    : msg
+                )
+              );
+            } else {
+              finishMessage({ content: payload.error });
+            }
+            try { await reader.cancel(); } catch {}
+            break;
+          }
+          if (payload.chunk) {
+            receivedAny = true;
+            appendChunk(payload.chunk);
+          }
+          if (payload.done) {
+            finishMessage({});
+            try { await reader.cancel(); } catch {}
+            break;
+          }
+        }
+        if (errored) break;
+      }
+
+      if (!receivedAny && !errored) {
+        finishMessage({ content: "No response received." });
+      } else if (!errored) {
+        finishMessage({});
+      }
+      setIsLoading(false);
+      abortControllerRef.current = null;
     } catch (err) {
       if (err.name === "AbortError") {
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === aiMessageId
-              ? { 
-                  ...msg, 
-                  content: "Request cancelled.",
-                  isStreaming: false 
-                }
-              : msg
-          )
-        );
+        finishMessage({ content: "Request cancelled." });
       } else {
-        setMessages(prev =>
-          prev.map(msg =>
-            msg.id === aiMessageId
-              ? {
-                  ...msg,
-                  content: "Connection error. Please try again.",
-                  isStreaming: false
-                }
-              : msg
-          )
-        );
+        finishMessage({ content: "Connection error. Please try again." });
       }
       setIsLoading(false);
       abortControllerRef.current = null;
     }
-  }, [isLoading, mode, cancelRequest, typewriterEffect]);
+  }, [isLoading, mode, cancelRequest]);
 
   return {
     messages,

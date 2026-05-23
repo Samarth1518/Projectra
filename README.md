@@ -79,7 +79,13 @@ projectra-ai/
 ## 🔑 Environment Variables
 
 **Backend (.env):**
-GEMINI_API_KEY=AIzaSyC4TnIMv____nBpyoPj0h9tQe9LGJbVaDE
+```
+# Recommended: comma-separated list of keys, rotated automatically on rate-limit
+GEMINI_API_KEYS=key1,key2,key3
+
+# Fallback (used only if GEMINI_API_KEYS is unset)
+# GEMINI_API_KEY=your_single_key
+```
 
 **Frontend (.env):**
 VITE_API_URL=http://localhost:5000
