@@ -1,47 +1,158 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Georgia&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+@layer base {
+  /* Light mode (tweakcn "Light Green" approximation) */
+  :root {
+    --background: 60 27% 98%;
+    --foreground: 258 33% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 258 33% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 258 33% 14%;
+
+    --primary: 82 86% 64%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 220 25% 26%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 12% 45%;
+
+    --accent: 140 22% 96%;
+    --accent-foreground: 150 50% 28%;
+
+    --destructive: 15 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 82 86% 64%;
+
+    --sidebar: 60 20% 96%;
+    --sidebar-foreground: 258 33% 14%;
+    --sidebar-primary: 82 86% 64%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 140 22% 92%;
+    --sidebar-accent-foreground: 150 50% 28%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 82 86% 64%;
+
+    --radius: 0.75rem;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-serif: 'Georgia', serif;
+  }
+
+  /* Dark mode (tweakcn "Light Green" dark variant) */
+  .dark {
+    --background: 258 40% 9%;
+    --foreground: 220 5% 96%;
+
+    --card: 258 33% 14%;
+    --card-foreground: 220 5% 96%;
+
+    --popover: 258 33% 14%;
+    --popover-foreground: 220 5% 96%;
+
+    --primary: 82 86% 64%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 220 20% 19%;
+    --secondary-foreground: 220 5% 96%;
+
+    --muted: 220 20% 19%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 150 30% 28%;
+    --accent-foreground: 82 86% 64%;
+
+    --destructive: 15 60% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 19%;
+    --input: 220 20% 19%;
+    --ring: 82 86% 64%;
+
+    --sidebar: 258 35% 11%;
+    --sidebar-foreground: 220 5% 96%;
+    --sidebar-primary: 82 86% 64%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 220 20% 19%;
+    --sidebar-accent-foreground: 220 5% 96%;
+    --sidebar-border: 220 20% 19%;
+    --sidebar-ring: 82 86% 64%;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  *, *::before, *::after {
+    border-color: hsl(var(--border));
+  }
+
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: hsl(var(--background)); }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
 }
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  background-color: #050508;
-  color: #f1f0ff;
-  font-family: 'Inter', sans-serif;
-  overflow-x: hidden;
+/* ---------------------------------------------------------------------- */
+/* Legacy utilities kept until every page migrates to shadcn tokens.      */
+/* These were previously hardcoded to neon-blue/purple gradients; now      */
+/* they pull from theme variables so the legacy UI still works in light  */
+/* and dark.                                                              */
+/* ---------------------------------------------------------------------- */
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent-foreground)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .glass {
+    background-color: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .neon-glow {
+    box-shadow: 0 0 24px hsl(var(--primary) / 0.35);
+  }
+  .text-text-primary { color: hsl(var(--foreground)); }
+  .text-text-secondary { color: hsl(var(--muted-foreground)); }
+  .text-text-muted { color: hsl(var(--muted-foreground) / 0.7); }
 }
 
-::-webkit-scrollbar {
-  width: 4px;
-}
-::-webkit-scrollbar-track {
-  background: #0d0d14;
-}
-::-webkit-scrollbar-thumb {
-  background: #4f9eff;
-  border-radius: 2px;
-}
-
-.glass {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-}
-
-.neon-glow {
-  box-shadow: 0 0 20px rgba(79,158,255,0.3), 0 0 40px rgba(79,158,255,0.1);
-}
-
-.gradient-text {
-  background: linear-gradient(135deg, #4f9eff, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+@keyframes blink {
+  50% { opacity: 0; }
 }

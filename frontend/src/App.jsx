@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import LandingPage from './pages/LandingPage'
 import ChatDashboard from './pages/ChatDashboard'
 import BuildPage from './pages/BuildPage'
+import { ThemeProvider } from './components/theme/ThemeProvider'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -57,9 +58,11 @@ function AnimatedRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AnimatedRoutes />
-    </BrowserRouter>
+    <ThemeProvider defaultTheme="system">
+      <BrowserRouter>
+        <AnimatedRoutes />
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 
