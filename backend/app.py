@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import os
 from dotenv import load_dotenv
 
@@ -14,7 +15,7 @@ CORS(app, resources={r"/api/*": {
     "supports_credentials": False
 }})
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 SYSTEM_PROMPTS = {
   "normal": """You are Projectra AI, a futuristic AI developer 
@@ -22,25 +23,23 @@ assistant for engineering students and beginners. Help users generate
 project ideas, create development roadmaps, recommend tech stacks, 
 and plan hackathon MVPs. Generate structured response with Project 
 Overview, Frontend, Backend, Database, APIs, Development Phases, 
-Deployment, Future scope. Use markdown with headings and bullet points. 
-Be friendly and encouraging. Keep under 500 words.""",
+Deployment, Future scope. Use markdown. Keep under 400 words.""",
 
   "hackathon": """You are Projectra AI in HACKATHON MODE. User has 
-12-48 hours to build an MVP. Cut complexity ruthlessly. Suggest 
-fastest tech stack. List only core MVP features max 3-5. List what 
-to SKIP. Suggest quickest deployment. Give time breakdown. 
+12-48 hours to build an MVP. Suggest fastest tech stack. List only 
+core MVP features max 3-5. List what to SKIP. Give time breakdown. 
 Format: MVP Features, Skip These, Stack, Deploy, Timeline. 
-Under 400 words.""",
+Under 300 words.""",
 
   "beginner": """You are Projectra AI in BEGINNER MODE. Use simple 
 friendly language. Break into numbered steps. Explain WHY each 
 technology is chosen. Suggest beginner-friendly tools only. 
-Include How to start today section. Be encouraging. Under 400 words.""",
+Include How to start today section. Under 400 words.""",
 
   "stack": """You are Projectra AI in TECH STACK ADVISOR mode. 
 Recommend Frontend, Backend, Database, Deployment with pros and cons. 
 Give clear final recommendation. Use comparison tables. 
-Be opinionated and decisive. Under 400 words."""
+Under 400 words."""
 }
 
 @app.route("/api/health")
@@ -62,8 +61,14 @@ def chat():
         )
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
-        model = genai.GenerativeModel("gemini-pro")
-        response = model.generate_content(full_prompt)
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-lite",
+            contents=full_prompt,
+            config=types.GenerateContentConfig(
+                max_output_tokens=800,
+                temperature=0.7,
+            )
+        )
 
         return jsonify({
             "response": response.text,
