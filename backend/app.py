@@ -62,7 +62,7 @@ def chat():
         )
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-pro")
         response = model.generate_content(full_prompt)
 
         return jsonify({
