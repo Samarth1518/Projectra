@@ -53,7 +53,7 @@ and decisive. Keep your response concise and under 400 words. Use clear headings
 
 @app.route("/api/health")
 def health():
-    return {"status": "ok", "model": "gemini-1.5-flash-latest"}
+    return {"status": "ok", "model": "gemini-pro"}
 
 @app.route("/api/ping")
 def ping():
@@ -72,7 +72,7 @@ def chat():
         )
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
         
-        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        model = genai.GenerativeModel("gemini-pro")
         response = model.generate_content(full_prompt)
         
         return jsonify({
