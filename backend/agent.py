@@ -113,11 +113,35 @@ def _strip_code_fences(text: str) -> str:
     return t
 
 
-def _code_files(pool, sse, client, plan: "ArchitectPlan", project_dir: Path):
-    """Generator: stream per-file code and persist to disk."""
-    stack_str = json.dumps(plan.stack.model_dump(exclude_none=True))
+def sse_padding():
+    """Big leading comment line so proxies (Render, Cloudflare, nginx) flush
+    headers immediately and start streaming, instead of buffering small
+    responses whole. 2 KB of zero-width-ish padding."""
+    return ": " + ("=" * 2048) + "\n\n"
 
-    for file_spec in plan.files:
+
+def sse_keepalive():
+    """Comment-line ping to keep the SSE connection alive during long
+    Gemini round-trips. Comments are ignored by the EventSource parser
+    but still travel through the proxy as bytes."""
+    return ": keepalive\n\n"
+
+
+def _code_files(pool, sse, initial_key: str, plan: "ArchitectPlan", project_dir: Path):
+    """Generator: stream per-file code and persist to disk.
+
+    Reuses the KeyPool for transparent 429/INVALID failover *between*
+    files (we never swap keys mid-stream — that would corrupt output)."""
+    stack_str = json.dumps(plan.stack.model_dump(exclude_none=True))
+    current_key = initial_key
+
+    for file_index, file_spec in enumerate(plan.files):
+        # Brief gap to dodge per-minute RPM ceilings on the free tier.
+        if file_index > 0:
+            for _ in range(8):  # ~1.6s of heartbeats so the proxy doesn't time out
+                yield sse_keepalive()
+                time.sleep(0.2)
+
         path = file_spec.path
         yield sse({"type": "file_start", "path": path, "language": file_spec.language})
 
@@ -129,18 +153,69 @@ def _code_files(pool, sse, client, plan: "ArchitectPlan", project_dir: Path):
             language=file_spec.language,
         )
 
+        # Try with the current key; on 429/INVALID, mark cooled and rotate.
+        # Cap attempts at the pool size + 1 so we don't loop forever.
+        max_attempts = max(len(pool), 1) + 1
         chunks: list[str] = []
-        try:
-            stream = client.models.generate_content_stream(
-                model="gemini-2.5-flash",
-                contents=prompt,
-            )
-            for chunk in stream:
-                if chunk.text:
-                    chunks.append(chunk.text)
-                    yield sse({"type": "file_chunk", "path": path, "code": chunk.text})
-        except Exception as e:
-            yield sse({"type": "file_error", "path": path, "error": str(e)})
+        wrote_any_chunk = False
+        succeeded = False
+        last_error = None
+
+        for attempt in range(max_attempts):
+            if not current_key:
+                last_error = "All API keys exhausted."
+                break
+
+            try:
+                client = genai.Client(api_key=current_key)
+                stream = client.models.generate_content_stream(
+                    model="gemini-2.5-flash",
+                    contents=prompt,
+                )
+                for chunk in stream:
+                    if chunk.text:
+                        chunks.append(chunk.text)
+                        wrote_any_chunk = True
+                        yield sse({"type": "file_chunk", "path": path, "code": chunk.text})
+                succeeded = True
+                break
+
+            except genai.errors.ClientError as e:
+                msg = str(e)
+                if wrote_any_chunk:
+                    # Mid-stream failure — don't switch keys (would corrupt the
+                    # file). Surface the error and move on to the next file.
+                    last_error = f"Interrupted mid-stream: {msg[:200]}"
+                    break
+                if e.code == 429:
+                    pool.mark_failed(current_key, "quota")
+                    new_key = pool.acquire()
+                    if not new_key:
+                        last_error = "All keys are rate-limited."
+                        break
+                    current_key = new_key
+                    yield sse({"type": "info", "message": f"Rate-limited; rotated to next key for {path}"})
+                    continue
+                if e.code == 400 and "API_KEY_INVALID" in msg:
+                    pool.mark_failed(current_key, "invalid")
+                    new_key = pool.acquire()
+                    if not new_key:
+                        last_error = "All keys invalid."
+                        break
+                    current_key = new_key
+                    continue
+                last_error = msg[:300]
+                break
+            except Exception as e:
+                last_error = str(e)[:300]
+                break
+
+        if not succeeded:
+            yield sse({"type": "file_error", "path": path, "error": last_error or "Unknown failure"})
+            # Persist an empty placeholder so the ZIP still includes the path.
+            abs_path = project_dir / path
+            abs_path.parent.mkdir(parents=True, exist_ok=True)
+            abs_path.write_text(f"// {path}: generation failed — {last_error or 'unknown'}\n", encoding="utf-8")
             continue
 
         # Persist (after stripping any rogue fences).
@@ -158,6 +233,9 @@ def build_architect_event_stream(pool, sse, idea: str, stack_hint: str = "auto")
     pool: KeyPool instance from app.py
     sse: the sse() helper from app.py (json -> "data: ...\\n\\n" string)
     """
+    # Force the proxy (Render, Cloudflare, nginx) to flush headers immediately.
+    yield sse_padding()
+
     if len(pool) == 0:
         yield sse({"type": "error", "error": "No Gemini API keys configured.", "done": True})
         return
@@ -211,7 +289,7 @@ def build_architect_event_stream(pool, sse, idea: str, stack_hint: str = "auto")
                 "stack": plan.stack.model_dump(exclude_none=True),
                 "run_instructions": plan.run_instructions,
             }
-            yield from _code_files(pool, sse, client, plan, project_dir)
+            yield from _code_files(pool, sse, key, plan, project_dir)
             yield sse({"type": "done", "project_id": project_id})
             return
 

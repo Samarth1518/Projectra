@@ -157,8 +157,15 @@ function dispatch(evt, setState) {
     case "file_error":
       setState(s => {
         const prev = s.files[evt.path] || {};
-        return { ...s, files: { ...s.files, [evt.path]: { ...prev, status: "error" } } };
+        return {
+          ...s,
+          files: { ...s.files, [evt.path]: { ...prev, status: "error", error: evt.error || "Generation failed" } },
+        };
       });
+      break;
+
+    case "info":
+      // Non-fatal info messages (e.g. key rotation). Ignore for now.
       break;
 
     case "done":

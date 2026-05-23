@@ -112,6 +112,11 @@ def chat():
     full_prompt = f"{system_prompt}\n\nUser: {user_message}"
 
     def generate():
+        # Force the proxy (Render/Cloudflare/nginx) to flush headers and
+        # start streaming immediately, so short responses don't sit
+        # buffered until the whole response is generated.
+        yield ": " + ("=" * 2048) + "\n\n"
+
         if len(POOL) == 0:
             yield sse({"error": "No Gemini API keys configured.", "done": True})
             return

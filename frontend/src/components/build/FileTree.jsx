@@ -43,10 +43,12 @@ export default function FileTree({ files, activeFile, onSelect }) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.02 }}
             onClick={() => onSelect?.(path)}
+            title={meta.status === "error" ? `Error: ${meta.error || "generation failed"}` : meta.purpose}
             className={`
               flex items-center gap-2 px-2 py-1.5 rounded-md text-left
               transition-colors duration-150
               ${isActive ? "bg-white/[0.07] text-text-primary" : "text-text-secondary hover:bg-white/[0.04]"}
+              ${meta.status === "error" ? "ring-1 ring-red-400/40" : ""}
             `}
           >
             <Icon size={13} className={isActive ? "text-neon-blue" : "text-text-muted"} />
