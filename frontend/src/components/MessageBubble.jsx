@@ -1,279 +1,221 @@
-import React, { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import { motion } from 'framer-motion'
-import { Copy, Check } from 'lucide-react'
-import { formatTimestamp } from '../utils/formatResponse'
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { motion } from "framer-motion";
+import { CopyIcon, CheckIcon } from "@radix-ui/react-icons";
+import { useTheme } from "./theme/ThemeProvider";
+import { formatTimestamp } from "../utils/formatResponse";
+import { cn } from "../lib/utils";
 
-const CodeBlock = ({ language, value }) => {
+function CodeBlock({ language, value }) {
   const [copied, setCopied] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const style = resolvedTheme === "dark" ? oneDark : oneLight;
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(value);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      const textArea = document.createElement("textarea");
-      textArea.value = value;
-      document.body.appendChild(textArea);
-      textArea.select();
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = value;
+      document.body.appendChild(ta);
+      ta.select();
       document.execCommand("copy");
-      document.body.removeChild(textArea);
+      document.body.removeChild(ta);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 1500);
     }
   };
 
   return (
-    <div className="relative group my-3 rounded-lg overflow-hidden border border-white/10">
-      <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
-        <span className="text-xs text-gray-400 font-mono">
+    <div className="relative group my-3 rounded-lg overflow-hidden border border-border bg-muted/40">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border bg-muted/40">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-mono">
           {language || "code"}
         </span>
         <button
           onClick={handleCopy}
-          className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all duration-200 border
-            ${copied
-              ? 'bg-green-500/20 border-green-500/50 text-green-400'
-              : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
-            }`}
-        >
-          {copied ? (
-            <>
-              <svg width="12" height="12" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2.5">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
-              <span>Copied!</span>
-            </>
-          ) : (
-            <>
-              <svg width="12" height="12" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-              <span>Copy</span>
-            </>
+          className={cn(
+            "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] transition-colors border",
+            copied
+              ? "bg-primary/15 border-primary/40 text-primary"
+              : "bg-background border-border text-muted-foreground hover:text-foreground"
           )}
+        >
+          {copied ? <CheckIcon className="h-2.5 w-2.5" /> : <CopyIcon className="h-2.5 w-2.5" />}
+          <span>{copied ? "Copied" : "Copy"}</span>
         </button>
       </div>
       <SyntaxHighlighter
-        style={atomDark}
+        style={style}
         language={language}
         PreTag="div"
         customStyle={{
           margin: 0,
           padding: "1rem",
           background: "transparent",
-          fontSize: "0.8rem",
+          fontSize: "0.78rem",
+          lineHeight: "1.6",
         }}
       >
         {value}
       </SyntaxHighlighter>
     </div>
   );
-};
+}
 
 export default function MessageBubble({ message }) {
-  const [copied, setCopied] = useState(false)
-  const isUser = message.role === 'user'
+  const [copied, setCopied] = useState(false);
+  const isUser = message.role === "user";
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(message.content);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      try {
-        const textArea = document.createElement("textarea");
-        textArea.value = message.content;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textArea);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (e) {
-        console.error("Copy failed:", e);
-      }
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = message.content;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     }
   };
 
   if (isUser) {
     return (
       <motion.div
-        initial={{ opacity: 0, x: 30 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="flex justify-end mb-4"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        className="flex justify-end"
       >
-        <div className="max-w-[75%] flex flex-col items-end gap-1">
-          <div
-            className="px-4 py-3 rounded-2xl rounded-tr-md text-sm leading-relaxed"
-            style={{
-              background: 'linear-gradient(135deg, #4f9eff, #6b8fff)',
-              color: '#fff',
-              boxShadow: '0 4px 20px rgba(79,158,255,0.25)',
-            }}
-          >
+        <div className="max-w-[78%] flex flex-col items-end gap-1">
+          <div className="px-4 py-2.5 rounded-2xl rounded-tr-sm text-sm leading-relaxed bg-primary text-primary-foreground shadow-sm">
             {message.content}
           </div>
-          <span className="text-xs pr-1" style={{ color: 'var(--text-muted)' }}>
+          <span className="text-[10px] text-muted-foreground pr-1">
             {formatTimestamp(message.timestamp)}
           </span>
         </div>
       </motion.div>
-    )
+    );
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -30 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="flex items-start gap-3 mb-4 group relative"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="flex items-start gap-3"
     >
-      {/* AI Avatar */}
-      <div
-        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white mt-0.5"
-        style={{ background: 'linear-gradient(135deg, #4f9eff, #a78bfa)', boxShadow: '0 0 12px rgba(79,158,255,0.3)' }}
-      >
+      <div className="shrink-0 h-8 w-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">
         P
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col gap-1 relative">
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div
-          className="px-4 py-3.5 rounded-2xl rounded-tl-md relative"
-          style={{
-            background: message.isError ? 'rgba(239,68,68,0.06)' : 'rgba(18,18,28,0.9)',
-            border: message.isError ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.07)',
-          }}
+          className={cn(
+            "px-4 py-3 rounded-2xl rounded-tl-sm border bg-card text-card-foreground",
+            "shadow-[inset_0_1px_0_hsl(var(--border)/0.4)]",
+            message.isError
+              ? "border-destructive/40 bg-destructive/5"
+              : "border-border"
+          )}
         >
-
-
-          <div className="prose-dark text-sm relative">
+          <div className="text-sm leading-relaxed">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                code({ node, inline, className, children, ...props }) {
+                code({ inline, className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || "");
                   const language = match ? match[1] : "";
                   const value = String(children).replace(/\n$/, "");
-                  
                   if (!inline && (match || value.includes("\n"))) {
                     return <CodeBlock language={language} value={value} />;
                   }
                   return (
-                    <code
-                      className="bg-white/10 text-blue-300 px-1.5 py-0.5 rounded text-sm font-mono"
-                      {...props}
-                    >
+                    <code className="bg-muted px-1.5 py-0.5 rounded text-[0.85em] font-mono text-foreground" {...props}>
                       {children}
                     </code>
                   );
                 },
-                h1: ({ children }) => <h1 className="text-lg font-bold mb-2 mt-3 gradient-text">{children}</h1>,
-                h2: ({ children }) => <h2 className="text-base font-bold mb-1.5 mt-2.5" style={{ color: '#e0dfff' }}>{children}</h2>,
-                h3: ({ children }) => <h3 className="text-sm font-semibold mb-1 mt-2" style={{ color: '#c8c7f0' }}>{children}</h3>,
-                p: ({ children }) => <p className="mb-2 leading-relaxed inline" style={{ color: '#d4d3f0' }}>{children}</p>,
-                ul: ({ children }) => <ul className="mb-2 space-y-0.5 pl-4">{children}</ul>,
-                ol: ({ children }) => <ol className="mb-2 space-y-0.5 pl-4 list-decimal">{children}</ol>,
-                li: ({ children }) => <li className="text-sm" style={{ color: '#d4d3f0' }}>{children}</li>,
-                strong: ({ children }) => <strong className="font-semibold" style={{ color: '#f1f0ff' }}>{children}</strong>,
-                em: ({ children }) => <em style={{ color: '#a78bfa' }}>{children}</em>,
+                h1: ({ children }) => <h1 className="text-base font-semibold mt-3 mb-1.5 text-foreground">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-sm font-semibold mt-2.5 mb-1 text-foreground">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-sm font-semibold mt-2 mb-1 text-foreground/90">{children}</h3>,
+                p: ({ children }) => <p className="mb-2 leading-relaxed text-foreground/90">{children}</p>,
+                ul: ({ children }) => <ul className="mb-2 pl-5 list-disc space-y-1 marker:text-muted-foreground">{children}</ul>,
+                ol: ({ children }) => <ol className="mb-2 pl-5 list-decimal space-y-1 marker:text-muted-foreground">{children}</ol>,
+                li: ({ children }) => <li className="text-sm text-foreground/90">{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                em: ({ children }) => <em className="text-primary not-italic font-medium">{children}</em>,
                 blockquote: ({ children }) => (
-                  <blockquote className="pl-3 my-2 italic text-sm" style={{ borderLeft: '3px solid #4f9eff', color: 'var(--text-secondary)' }}>
+                  <blockquote className="pl-3 my-2 border-l-2 border-primary/60 italic text-sm text-muted-foreground">
                     {children}
                   </blockquote>
                 ),
                 table: ({ children }) => (
-                  <div className="overflow-x-auto my-3">
+                  <div className="overflow-x-auto my-3 rounded-md border border-border">
                     <table className="w-full text-sm border-collapse">{children}</table>
                   </div>
                 ),
                 th: ({ children }) => (
-                  <th className="text-left px-3 py-2 text-xs font-semibold"
-                    style={{ background: 'rgba(79,158,255,0.1)', border: '1px solid rgba(255,255,255,0.06)', color: '#4f9eff' }}>
+                  <th className="text-left px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 border-b border-border">
                     {children}
                   </th>
                 ),
                 td: ({ children }) => (
-                  <td className="px-3 py-2 text-xs" style={{ border: '1px solid rgba(255,255,255,0.05)', color: '#d4d3f0' }}>
+                  <td className="px-3 py-2 text-xs text-foreground/90 border-b border-border/60">
                     {children}
                   </td>
                 ),
                 a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noreferrer" className="underline underline-offset-2" style={{ color: '#4f9eff' }}>
+                  <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:opacity-80">
                     {children}
                   </a>
                 ),
-                hr: () => <hr className="my-3" style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.07)' }} />,
+                hr: () => <hr className="my-3 border-t border-border" />,
               }}
             >
               {message.content}
             </ReactMarkdown>
 
             {message.isStreaming && (
-              <span 
-                className="inline-block w-[2px] h-[1em] ml-1 align-middle"
-                style={{ 
-                  background: '#4f9eff',
-                  boxShadow: '0 0 8px #4f9eff',
-                  animation: 'blink 1s step-end infinite' 
-                }}
+              <span
+                className="inline-block w-[2px] h-[1em] ml-1 align-middle bg-foreground"
+                style={{ animation: "blink 1s step-end infinite" }}
               />
             )}
           </div>
-          
-          {!message.isError && (
+
+          {!message.isError && message.content && !message.isStreaming && (
             <div className="flex justify-end mt-3">
               <button
                 onClick={handleCopy}
-                className={`
-                  flex items-center gap-1 px-2 py-1 rounded-md text-xs
-                  transition-all duration-200 border
-                  ${copied 
-                    ? 'bg-green-500/20 border-green-500/50 text-green-400' 
-                    : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
-                  }
-                `}
-              >
-                {copied ? (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 24 24" 
-                         fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <svg width="12" height="12" viewBox="0 0 24 24" 
-                         fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                    </svg>
-                    <span>Copy</span>
-                  </>
+                className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-md text-[10px] transition-colors border",
+                  copied
+                    ? "bg-primary/15 border-primary/40 text-primary"
+                    : "bg-background border-border text-muted-foreground hover:text-foreground"
                 )}
+              >
+                {copied ? <CheckIcon className="h-2.5 w-2.5" /> : <CopyIcon className="h-2.5 w-2.5" />}
+                <span>{copied ? "Copied" : "Copy"}</span>
               </button>
             </div>
           )}
         </div>
-        <span className="text-xs pl-1" style={{ color: 'var(--text-muted)' }}>
+        <span className="text-[10px] text-muted-foreground pl-1">
           {formatTimestamp(message.timestamp)}
         </span>
       </div>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-      `}} />
     </motion.div>
-  )
+  );
 }

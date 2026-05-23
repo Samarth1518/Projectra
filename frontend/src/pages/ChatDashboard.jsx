@@ -1,47 +1,61 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Menu, X, ArrowLeft, Send, Sparkles, Zap, Brain, Layers, GraduationCap, MessageSquarePlus } from 'lucide-react';
-import { useChat } from '../hooks/useChat';
-import MessageBubble from '../components/MessageBubble';
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  HamburgerMenuIcon,
+  Cross1Icon,
+  ArrowLeftIcon,
+  PaperPlaneIcon,
+  ChatBubbleIcon,
+  LightningBoltIcon,
+  ReaderIcon,
+  LayersIcon,
+  PlusIcon,
+  MagicWandIcon,
+} from "@radix-ui/react-icons";
+import { useChat } from "../hooks/useChat";
+import MessageBubble from "../components/MessageBubble";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { ThemeToggle } from "../components/theme/ThemeToggle";
+import { cn } from "../lib/utils";
 
 const MODES = [
-  { id: 'normal', title: 'Normal Mode', icon: Brain, subtitle: 'Standard AI assistant', color: 'text-blue-400' },
-  { id: 'hackathon', title: 'Hackathon', icon: Zap, subtitle: 'Fast MVP builder', color: 'text-yellow-400' },
-  { id: 'beginner', title: 'Beginner', icon: GraduationCap, subtitle: 'Step-by-step help', color: 'text-green-400' },
-  { id: 'stack', title: 'Stack Advisor', icon: Layers, subtitle: 'Tech stack choices', color: 'text-purple-400' }
+  { id: "normal",    title: "Normal",         subtitle: "Standard AI assistant", icon: ChatBubbleIcon },
+  { id: "hackathon", title: "Hackathon",      subtitle: "Fast MVP guidance",     icon: LightningBoltIcon },
+  { id: "beginner",  title: "Beginner",       subtitle: "Step-by-step help",     icon: ReaderIcon },
+  { id: "stack",     title: "Stack Advisor",  subtitle: "Tech stack choices",    icon: LayersIcon },
 ];
 
 const SUGGESTIONS = [
   "Build me a Netflix clone",
   "Best stack for a portfolio?",
   "I have 12 hours. MVP ideas?",
-  "Explain React hooks to a beginner"
+  "Explain React hooks to a beginner",
 ];
 
 export default function ChatDashboard() {
   const navigate = useNavigate();
   const { messages, mode, isLoading, sendMessage, clearChat, setMode } = useChat();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   const handleSend = (e) => {
     e?.preventDefault();
     if (!inputText.trim() || isLoading) return;
     sendMessage(inputText);
-    setInputText('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    setInputText("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -49,121 +63,68 @@ export default function ChatDashboard() {
 
   const handleInput = (e) => {
     setInputText(e.target.value);
-    e.target.style.height = 'auto';
-    e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
+    e.target.style.height = "auto";
+    e.target.style.height = Math.min(e.target.scrollHeight, 150) + "px";
   };
 
-  const activeModeDetails = MODES.find(m => m.id === mode);
-  const ActiveIcon = activeModeDetails?.icon || Brain;
+  const activeMode = MODES.find((m) => m.id === mode) || MODES[0];
+  const ActiveIcon = activeMode.icon;
 
   return (
-    <div className="flex h-screen w-full bg-[#050508] text-white overflow-hidden font-sans">
-      
-      {/* Mobile Overlay */}
-      {mobileOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
+    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-40 lg:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Sidebar */}
-      <div className={`fixed lg:static top-0 left-0 h-full w-[260px] bg-[#0d0d14] border-r border-white/5 z-50 transform transition-transform duration-300 flex flex-col ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-        <div className="p-6 flex items-center justify-between border-b border-white/5">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <div className="font-bold text-xl gradient-text tracking-tight">Projectra AI</div>
-            <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-          </div>
-          <button className="lg:hidden text-gray-400 hover:text-white" onClick={() => setMobileOpen(false)}>
-            <X size={20} />
-          </button>
-        </div>
+      <Sidebar
+        navigate={navigate}
+        mode={mode}
+        setMode={setMode}
+        clearChat={clearChat}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4 mt-2 px-2">AI Modes</div>
-          {MODES.map((m) => {
-            const Icon = m.icon;
-            const isActive = mode === m.id;
-            return (
-              <button
-                key={m.id}
-                onClick={() => { setMode(m.id); setMobileOpen(false); }}
-                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-left ${isActive ? 'bg-blue-500/15 border border-blue-500/30 neon-glow' : 'hover:bg-white/5 border border-transparent'}`}
-              >
-                <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-500/20' : 'bg-white/5'}`}>
-                  <Icon size={18} className={isActive ? 'text-blue-400' : 'text-gray-400'} />
-                </div>
-                <div>
-                  <div className={`font-semibold text-sm ${isActive ? 'text-blue-100' : 'text-gray-200'}`}>{m.title}</div>
-                  <div className="text-xs text-gray-500">{m.subtitle}</div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="p-4 border-t border-white/5">
-          <button 
-            onClick={() => { clearChat(); setMobileOpen(false); }}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-medium transition-colors border border-white/10"
-          >
-            <MessageSquarePlus size={16} />
-            New Chat
-          </button>
-        </div>
-      </div>
-
-      {/* Main Area */}
-      <div className="flex-1 flex flex-col h-full bg-[#050508] relative">
-        {/* Topbar */}
-        <div className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-white/5 glass z-10 sticky top-0">
+      <div className="flex-1 flex flex-col h-full bg-background relative">
+        <header className="h-14 flex items-center justify-between px-4 lg:px-6 border-b border-border bg-background/80 backdrop-blur-xl z-10 sticky top-0">
           <div className="flex items-center gap-3">
-            <button className="lg:hidden text-gray-400 hover:text-white p-2 -ml-2" onClick={() => setMobileOpen(true)}>
-              <Menu size={20} />
+            <button
+              className="lg:hidden text-muted-foreground hover:text-foreground p-2 -ml-2"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <HamburgerMenuIcon className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-2">
-              <ActiveIcon size={18} className={activeModeDetails?.color} />
-              <span className="font-semibold text-sm text-gray-200">{activeModeDetails?.title}</span>
-              <span className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] font-medium text-gray-400 border border-white/10">Active</span>
+              <ActiveIcon className="h-4 w-4 text-primary" />
+              <span className="font-medium text-sm">{activeMode.title}</span>
+              <Badge variant="muted" className="text-[10px]">Active</Badge>
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-2">
-            <button
-              onClick={() => navigate('/build')}
-              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium text-white transition-all"
-              style={{ background: 'linear-gradient(135deg, #a78bfa, #f472b6)', boxShadow: '0 0 14px rgba(167,139,250,0.35)' }}
-            >
-              ✨ Build Mode
-            </button>
-            <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
-              <ArrowLeft size={14} /> Home
-            </button>
+            <ThemeToggle />
+            <Button variant="default" size="sm" onClick={() => navigate("/build")}>
+              <MagicWandIcon className="h-3.5 w-3.5" />
+              Build Mode
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+              <ArrowLeftIcon className="h-3.5 w-3.5" /> Home
+            </Button>
           </div>
-        </div>
+        </header>
 
-        {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
+        <div className="flex-1 overflow-y-auto px-4 lg:px-8 py-6">
           <div className="max-w-3xl mx-auto flex flex-col gap-6">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center mt-20 lg:mt-32">
-                <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6 neon-glow">
-                  <Sparkles size={32} className="text-blue-400" />
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight">Ask me anything about your project</h2>
-                <p className="text-gray-400 mb-10 max-w-md">I can help you build roadmaps, choose your tech stack, or create a hackathon MVP.</p>
-                
-                <div className="flex flex-wrap justify-center gap-3 max-w-2xl">
-                  {SUGGESTIONS.map((s, i) => (
-                    <button 
-                      key={i}
-                      onClick={() => { setInputText(s); }}
-                      className="px-4 py-2.5 glass rounded-full text-sm text-gray-300 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <EmptyState onPick={setInputText} />
             ) : (
               messages.map((msg, i) => (
                 <div key={msg.id || i}>
@@ -171,48 +132,187 @@ export default function ChatDashboard() {
                 </div>
               ))
             )}
-            
-            {isLoading && (
-              <div className="flex items-center gap-3 text-gray-400 text-sm py-4">
-                <div className="flex gap-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                Projectra AI is thinking...
+
+            {isLoading && messages.length === 0 && (
+              <div className="flex items-center gap-2 text-muted-foreground text-sm py-2">
+                <ThinkingDots />
+                <span>Projectra is thinking</span>
               </div>
             )}
             <div ref={messagesEndRef} />
           </div>
         </div>
 
-        {/* Input Area */}
-        <div className="p-4 lg:p-6 bg-gradient-to-t from-[#050508] to-transparent">
-          <div className="max-w-3xl mx-auto relative">
-            <form onSubmit={handleSend} className="glass rounded-2xl p-2 flex items-end gap-2 border border-white/10 focus-within:border-blue-500/50 focus-within:shadow-[0_0_15px_rgba(79,158,255,0.15)] transition-all">
+        <div className="px-4 lg:px-6 pb-5 pt-3 bg-gradient-to-t from-background via-background to-transparent">
+          <div className="max-w-3xl mx-auto">
+            <form
+              onSubmit={handleSend}
+              className={cn(
+                "rounded-2xl border border-input bg-card p-1.5 flex items-end gap-2",
+                "shadow-[inset_0_1px_0_hsl(var(--border)/0.5)]",
+                "transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30"
+              )}
+            >
               <textarea
                 ref={textareaRef}
                 value={inputText}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
-                placeholder="Type your message here..."
-                className="w-full max-h-[150px] bg-transparent text-white placeholder-gray-500 px-3 py-3 outline-none resize-none overflow-y-auto text-sm"
+                placeholder="Ask anything about your project..."
+                className="w-full max-h-[150px] bg-transparent text-foreground placeholder:text-muted-foreground px-3 py-2.5 outline-none resize-none overflow-y-auto text-sm"
                 rows="1"
               />
-              <button 
+              <Button
                 type="submit"
+                size="icon"
                 disabled={!inputText.trim() || isLoading}
-                className="p-3 mb-1 mr-1 rounded-xl bg-blue-500 text-white disabled:bg-white/5 disabled:text-gray-500 hover:bg-blue-400 transition-colors flex-shrink-0"
+                aria-label="Send"
               >
-                <Send size={18} />
-              </button>
+                <PaperPlaneIcon className="h-4 w-4" />
+              </Button>
             </form>
-            <div className="text-center mt-3 text-[10px] text-gray-500">
-              AI can make mistakes. Consider verifying important information.
-            </div>
+            <p className="text-center mt-2 text-[10px] text-muted-foreground">
+              AI can make mistakes. Verify important details.
+            </p>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Sidebar({ navigate, mode, setMode, clearChat, mobileOpen, setMobileOpen }) {
+  return (
+    <aside
+      className={cn(
+        "fixed lg:static top-0 left-0 h-full w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border z-50 flex flex-col",
+        "transition-transform duration-300",
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}
+    >
+      <div className="px-5 py-4 flex items-center justify-between border-b border-sidebar-border">
+        <button
+          className="flex items-center gap-2 group"
+          onClick={() => navigate("/")}
+        >
+          <div className="h-7 w-7 rounded-md bg-sidebar-primary/15 border border-sidebar-primary/30 flex items-center justify-center">
+            <span className="text-sidebar-primary font-bold text-sm">P</span>
+          </div>
+          <span className="font-semibold text-sm tracking-tight">Projectra</span>
+        </button>
+        <button
+          className="lg:hidden text-muted-foreground hover:text-foreground"
+          onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
+        >
+          <Cross1Icon className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-1">
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-2 pt-2 pb-2">
+          Modes
+        </p>
+        {MODES.map((m) => {
+          const Icon = m.icon;
+          const isActive = mode === m.id;
+          return (
+            <button
+              key={m.id}
+              onClick={() => { setMode(m.id); setMobileOpen(false); }}
+              className={cn(
+                "w-full flex items-center gap-3 px-2.5 py-2.5 rounded-md text-left transition-colors",
+                isActive
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+              )}
+            >
+              <div
+                className={cn(
+                  "h-7 w-7 rounded-md flex items-center justify-center shrink-0",
+                  isActive ? "bg-sidebar-primary/20" : "bg-sidebar-accent/40"
+                )}
+              >
+                <Icon className={cn("h-3.5 w-3.5", isActive ? "text-sidebar-primary" : "text-muted-foreground")} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-sm font-medium truncate", isActive ? "text-sidebar-accent-foreground" : "")}>
+                  {m.title}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate">{m.subtitle}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="p-3 border-t border-sidebar-border space-y-2">
+        <Button
+          className="w-full"
+          variant="default"
+          size="sm"
+          onClick={() => navigate("/build")}
+        >
+          <MagicWandIcon className="h-3.5 w-3.5" />
+          Build Mode
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={() => { clearChat(); setMobileOpen(false); }}
+        >
+          <PlusIcon className="h-3.5 w-3.5" />
+          New Chat
+        </Button>
+      </div>
+    </aside>
+  );
+}
+
+function EmptyState({ onPick }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="flex flex-col items-center justify-center text-center mt-16 lg:mt-24"
+    >
+      <div className="h-14 w-14 rounded-2xl bg-accent border border-border flex items-center justify-center mb-6">
+        <ChatBubbleIcon className="h-6 w-6 text-accent-foreground" />
+      </div>
+      <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">
+        Ask anything about your project
+      </h2>
+      <p className="text-muted-foreground mb-10 max-w-md text-sm leading-relaxed">
+        I can help you build roadmaps, choose your tech stack, or
+        plan a hackathon MVP.
+      </p>
+      <div className="flex flex-wrap justify-center gap-2 max-w-2xl">
+        {SUGGESTIONS.map((s) => (
+          <button
+            key={s}
+            onClick={() => onPick(s)}
+            className="px-3.5 py-2 rounded-full border border-border bg-card text-sm text-foreground/80 hover:text-foreground hover:bg-accent hover:border-accent-foreground/20 transition-colors shadow-[inset_0_1px_0_hsl(var(--border)/0.4)]"
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <div className="flex gap-1 items-center">
+      {[0, 150, 300].map((delay) => (
+        <span
+          key={delay}
+          className="w-1.5 h-1.5 rounded-full bg-primary"
+          style={{ animation: "bounce 1s infinite", animationDelay: `${delay}ms` }}
+        />
+      ))}
     </div>
   );
 }
