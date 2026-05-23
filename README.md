@@ -96,6 +96,20 @@ VITE_API_URL=http://localhost:5000
 - Backend deployed on **Render**
 - Live at: [https://projectra-nu.vercel.app](https://projectra-nu.vercel.app)
 
+### Deploying to Render
+
+The backend service uses `render.yaml` (root: `backend/`). To enable
+multi-key rotation:
+
+1. In the Render dashboard, open the service → **Environment**.
+2. Add `GEMINI_API_KEYS` with comma-separated keys
+   (e.g. `key1,key2,key3` — no quotes, no spaces).
+3. Save. Render auto-redeploys.
+4. Verify at `/api/health` — `keys` field shows the count.
+
+`GEMINI_API_KEY` (single key) is kept as a fallback for backward
+compatibility.
+
 ## 👤 Author
 **Samarth N G**
 
