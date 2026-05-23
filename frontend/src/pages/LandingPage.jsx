@@ -2,11 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   motion,
-  useAnimationFrame,
   useInView,
-  useMotionValue,
-  useScroll,
-  useTransform,
   useReducedMotion,
 } from "framer-motion";
 import {
@@ -172,34 +168,39 @@ function GitHubStarPill() {
 /* ---------- hero ---------- */
 
 function Hero({ onBuild, onChat }) {
-  const reduce = useReducedMotion();
-  const { scrollY } = useScroll();
-  const imageY     = useTransform(scrollY, [0, 700], [0, reduce ? 0 : 120]);
-  const imageScale = useTransform(scrollY, [0, 700], [1, reduce ? 1 : 1.08]);
-
   return (
     <section className="relative pt-28 sm:pt-32 pb-20 sm:pb-24 px-4 sm:px-6 overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <motion.div
-          style={{ y: imageY, scale: imageScale }}
-          className="absolute -inset-y-20 inset-x-0 will-change-transform"
-        >
-          <img
-            src="/hero.jpg"
-            alt=""
-            className="w-full h-full object-cover opacity-25 dark:opacity-30"
-          />
-        </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background))_75%)]" />
-      </div>
+      {/* Diagonal cross grid pattern, masked to a top-centered ellipse so it
+          fades out gracefully toward the rest of the page. Lines pick up
+          the theme `--border` colour so the pattern reads right in both
+          light and dark mode. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage: `
+            linear-gradient(45deg, transparent 49%, hsl(var(--border)) 49%, hsl(var(--border)) 51%, transparent 51%),
+            linear-gradient(-45deg, transparent 49%, hsl(var(--border)) 49%, hsl(var(--border)) 51%, transparent 51%)
+          `,
+          backgroundSize: "40px 40px",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
+          maskImage:
+            "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
+        }}
+      />
+      {/* Soft primary tint behind the headline */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_45%_at_50%_30%,hsl(var(--primary)/0.07),transparent_70%)]"
+      />
 
       <motion.div
         initial="hidden" animate="visible" variants={stagger}
         className="mx-auto max-w-4xl text-center relative"
       >
         <motion.div variants={fadeUp} transition={easing}>
-          <Badge variant="outline" className="mb-6 px-3 py-1 text-xs">
+          <Badge variant="outline" className="mb-6 px-3 py-1 text-xs bg-background/80 backdrop-blur">
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Gemini-powered. Built for hackathons.
           </Badge>
@@ -231,7 +232,7 @@ function Hero({ onBuild, onChat }) {
             Try Build Mode
             <ArrowRightIcon className="h-4 w-4" />
           </Button>
-          <Button size="lg" variant="outline" onClick={onChat} className="w-full sm:w-auto">
+          <Button size="lg" variant="outline" onClick={onChat} className="w-full sm:w-auto bg-background/80 backdrop-blur">
             Open Chat
           </Button>
         </motion.div>
