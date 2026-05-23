@@ -67,14 +67,15 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: "01", title: "Describe", desc: "Type a sentence or speak it into the mic. Pick a stack or let the AI choose." },
-  { n: "02", title: "Generate", desc: "Watch the architecture, file tree, and source code stream into the workspace." },
-  { n: "03", title: "Ship",     desc: "Download a ZIP, open in StackBlitz, or have the AI critique your build." },
+  { n: "01", title: "Describe", desc: "Type a sentence or speak it into the mic. Pick a stack or let the AI choose.", icon: Pencil2Icon },
+  { n: "02", title: "Generate", desc: "Watch the architecture, file tree, and source code stream into the workspace.", icon: MagicWandIcon },
+  { n: "03", title: "Ship",     desc: "Download a ZIP, open in StackBlitz, or have the AI critique your build.", icon: RocketIcon },
 ];
 
 const FOOTER_LINKS = [
   {
     title: "Product",
+    icon: LayersIcon,
     items: [
       { label: "Build Mode", to: "/build" },
       { label: "Chat", to: "/chat" },
@@ -84,6 +85,7 @@ const FOOTER_LINKS = [
   },
   {
     title: "Resources",
+    icon: ReaderIcon,
     items: [
       { label: "Documentation", to: "#" },
       { label: "Changelog", to: "#" },
@@ -93,6 +95,7 @@ const FOOTER_LINKS = [
   },
   {
     title: "Company",
+    icon: GlobeIcon,
     items: [
       { label: "About", to: "#" },
       { label: "Blog", to: "#" },
@@ -809,7 +812,10 @@ function CounterStat({ target, suffix = "", label, sub }) {
 
   return (
     <div ref={ref} className="h-full p-5 sm:p-6 flex flex-col justify-center">
-      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</p>
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium flex items-center gap-1.5">
+        <FileTextIcon className="h-3 w-3 text-primary" />
+        {label}
+      </p>
       <p className="mt-1.5 text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums">
         {val}
         {suffix}
@@ -873,7 +879,8 @@ function FeaturesSection() {
         className="mx-auto max-w-6xl"
       >
         <motion.div variants={fadeUp} transition={easing} className="max-w-2xl mb-10 sm:mb-12">
-          <Badge variant="muted" className="mb-3">
+          <Badge variant="muted" className="mb-3 gap-1.5">
+            <TargetIcon className="h-3 w-3" />
             <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Features
           </Badge>
@@ -1161,7 +1168,10 @@ function HowItWorksSection() {
         className="mx-auto max-w-5xl text-center"
       >
         <motion.div variants={fadeUp} transition={easing}>
-          <Badge variant="muted" className="mb-3">How it works</Badge>
+          <Badge variant="muted" className="mb-3 gap-1.5">
+            <RowsIcon className="h-3 w-3" />
+            How it works
+          </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
             Three steps, no setup.
           </h2>
@@ -1189,25 +1199,31 @@ function HowItWorksSection() {
             )}
           </div>
 
-          {STEPS.map((s, i) => (
-            <motion.div
-              key={s.n}
-              variants={fadeUp}
-              transition={easing}
-              className="flex flex-col items-center text-center relative"
-            >
-              <div className="relative h-14 w-14 rounded-full bg-background border border-border flex items-center justify-center font-mono text-sm font-semibold text-primary shadow-sm">
-                {s.n}
-              </div>
-              <h3 className="mt-5 font-semibold text-base">{s.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">{s.desc}</p>
+          {STEPS.map((s, i) => {
+            const StepIcon = s.icon;
+            return (
+              <motion.div
+                key={s.n}
+                variants={fadeUp}
+                transition={easing}
+                className="flex flex-col items-center text-center relative"
+              >
+                <div className="relative h-14 w-14 rounded-full bg-background border border-border flex items-center justify-center font-mono text-sm font-semibold text-primary shadow-sm">
+                  {s.n}
+                </div>
+                <h3 className="mt-5 font-semibold text-base flex items-center gap-1.5">
+                  {StepIcon && <StepIcon className="h-3.5 w-3.5 text-primary" />}
+                  {s.title}
+                </h3>
+                <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">{s.desc}</p>
 
-              {/* mobile vertical connector between steps */}
-              {i < STEPS.length - 1 && (
-                <div className="md:hidden h-8 w-px bg-border mt-6" />
-              )}
-            </motion.div>
-          ))}
+                {/* mobile vertical connector between steps */}
+                {i < STEPS.length - 1 && (
+                  <div className="md:hidden h-8 w-px bg-border mt-6" />
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       </motion.div>
     </section>
@@ -1225,7 +1241,10 @@ function WorkflowSection() {
         className="mx-auto max-w-6xl"
       >
         <motion.div variants={fadeUp} transition={easing} className="max-w-2xl mx-auto text-center mb-12 sm:mb-16">
-          <Badge variant="muted" className="mb-3">Under the hood</Badge>
+          <Badge variant="muted" className="mb-3 gap-1.5">
+            <CubeIcon className="h-3 w-3" />
+            Under the hood
+          </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
             From a single sentence to a working repo.
           </h2>
@@ -1448,36 +1467,42 @@ function FooterSection() {
           </div>
         </div>
 
-        {FOOTER_LINKS.map((group) => (
-          <div key={group.title}>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3">{group.title}</p>
-            <ul className="space-y-2">
-              {group.items.map((item) => (
-                <li key={item.label}>
-                  {item.external ? (
-                    <a
-                      href={item.to}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm text-foreground/80 hover:text-foreground transition-colors inline-flex items-center gap-1"
-                    >
-                      {item.label}
-                      <ArrowTopRightIcon className="h-3 w-3" />
-                    </a>
-                  ) : item.to.startsWith("#") ? (
-                    <a href={item.to} className="text-sm text-foreground/80 hover:text-foreground transition-colors">
-                      {item.label}
-                    </a>
-                  ) : (
-                    <Link to={item.to} className="text-sm text-foreground/80 hover:text-foreground transition-colors">
-                      {item.label}
-                    </Link>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {FOOTER_LINKS.map((group) => {
+          const GroupIcon = group.icon;
+          return (
+            <div key={group.title}>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-3 flex items-center gap-1.5">
+                {GroupIcon && <GroupIcon className="h-3 w-3 text-primary" />}
+                {group.title}
+              </p>
+              <ul className="space-y-2">
+                {group.items.map((item) => (
+                  <li key={item.label}>
+                    {item.external ? (
+                      <a
+                        href={item.to}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-foreground/80 hover:text-foreground transition-colors inline-flex items-center gap-1"
+                      >
+                        {item.label}
+                        <ArrowTopRightIcon className="h-3 w-3" />
+                      </a>
+                    ) : item.to.startsWith("#") ? (
+                      <a href={item.to} className="text-sm text-foreground/80 hover:text-foreground transition-colors">
+                        {item.label}
+                      </a>
+                    ) : (
+                      <Link to={item.to} className="text-sm text-foreground/80 hover:text-foreground transition-colors">
+                        {item.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
 
       <div className="mx-auto max-w-6xl mt-10 sm:mt-12 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground text-center sm:text-left">
