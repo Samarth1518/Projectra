@@ -204,15 +204,15 @@ function FloatingLogo({ Logo, name, className, delay = 0, duration = 4 }) {
 
 function FloatingBrandLogos() {
   return (
-    <div aria-hidden className="hidden lg:block pointer-events-none absolute inset-0 -z-[1]">
+    <div aria-hidden className="hidden md:block pointer-events-none absolute inset-0 z-0">
       {/* Left column, top to bottom */}
-      <FloatingLogo Logo={GoogleLogo}  name="Google" className="top-36 left-[6%]"        delay={0.0} duration={4.2} />
-      <FloatingLogo Logo={GithubBrand} name="GitHub" className="top-1/2 left-[3%]"        delay={0.6} duration={4.6} />
-      <FloatingLogo Logo={ReactLogo}   name="React"  className="bottom-32 left-[8%]"      delay={1.2} duration={5.0} />
+      <FloatingLogo Logo={GoogleLogo}  name="Google" className="top-36 left-[5%] xl:left-[8%]"     delay={0.0} duration={4.2} />
+      <FloatingLogo Logo={GithubBrand} name="GitHub" className="top-1/2 left-[2%] xl:left-[4%]"     delay={0.6} duration={4.6} />
+      <FloatingLogo Logo={ReactLogo}   name="React"  className="bottom-28 left-[7%] xl:left-[10%]"  delay={1.2} duration={5.0} />
       {/* Right column, top to bottom */}
-      <FloatingLogo Logo={GeminiLogo}  name="Gemini" className="top-36 right-[6%]"        delay={0.3} duration={4.4} />
-      <FloatingLogo Logo={GDGLogo}     name="GDG"    className="top-1/2 right-[3%]"       delay={0.9} duration={4.8} />
-      <FloatingLogo Logo={VercelLogo}  name="Vercel" className="bottom-32 right-[8%] text-foreground" delay={1.5} duration={5.2} />
+      <FloatingLogo Logo={GeminiLogo}  name="Gemini" className="top-36 right-[5%] xl:right-[8%]"    delay={0.3} duration={4.4} />
+      <FloatingLogo Logo={GDGLogo}     name="GDG"    className="top-1/2 right-[2%] xl:right-[4%]"   delay={0.9} duration={4.8} />
+      <FloatingLogo Logo={VercelLogo}  name="Vercel" className="bottom-28 right-[7%] xl:right-[10%] text-foreground" delay={1.5} duration={5.2} />
     </div>
   );
 }
@@ -224,8 +224,7 @@ function HeroAccent({ children, delay = 0 }) {
     <motion.em
       className={cn(
         "inline-block italic font-medium relative text-primary",
-        "font-display",
-        "underline decoration-primary/60 decoration-[3px] underline-offset-[0.18em]"
+        "font-display"
       )}
       animate={{
         textShadow: [
@@ -349,7 +348,7 @@ function Hero({ onBuild, onChat }) {
 
       <motion.div
         initial="hidden" animate="visible" variants={stagger}
-        className="mx-auto max-w-4xl text-center relative"
+        className="mx-auto max-w-4xl text-center relative z-10"
       >
         <motion.div variants={fadeUp} transition={easing}>
           <Badge variant="outline" className="mb-6 px-3 py-1 text-xs bg-background/80 backdrop-blur gap-1.5">
