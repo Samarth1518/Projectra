@@ -161,5 +161,50 @@ def chat():
     )
 
 
+@app.route("/api/agent/build", methods=["POST"])
+def agent_build():
+    from agent import build_architect_event_stream
+
+    data = request.get_json() or {}
+    idea = data.get("idea", "")
+    stack_hint = data.get("stack", "auto")
+
+    if not idea.strip():
+        def empty():
+            yield sse({"type": "error", "error": "Provide a project idea.", "done": True})
+        return Response(stream_with_context(empty()), mimetype="text/event-stream")
+
+    return Response(
+        stream_with_context(build_architect_event_stream(POOL, sse, idea, stack_hint)),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.route("/api/project/<project_id>/zip")
+def project_zip(project_id):
+    import shutil
+    from flask import send_file, abort
+    from agent import PROJECT_STORE, _gc_project_store
+
+    _gc_project_store()
+    meta = PROJECT_STORE.get(project_id)
+    if not meta:
+        abort(404, description="Project not found or expired.")
+
+    src_dir = meta["dir"]
+    archive_base = str(src_dir) + "_archive"
+    archive_path = shutil.make_archive(archive_base, "zip", root_dir=str(src_dir))
+    return send_file(
+        archive_path,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"projectra_{project_id[:8]}.zip",
+    )
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000, threaded=True)
