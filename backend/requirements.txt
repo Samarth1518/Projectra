@@ -1,5 +1,5 @@
 flask
 flask-cors
-google-genai==0.8.0
+google-genai
 python-dotenv
 gunicorn
