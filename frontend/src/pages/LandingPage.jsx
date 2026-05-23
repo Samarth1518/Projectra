@@ -21,6 +21,17 @@ import {
   StarIcon,
   RocketIcon,
   CubeIcon,
+  SpeakerLoudIcon,
+  Pencil2Icon,
+  LockOpen1Icon,
+  TimerIcon,
+  FileTextIcon,
+  RowsIcon,
+  StackIcon,
+  GlobeIcon,
+  EnvelopeClosedIcon,
+  TargetIcon,
+  HeartIcon,
 } from "@radix-ui/react-icons";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
@@ -224,7 +235,8 @@ function HeroAccent({ children, delay = 0 }) {
     <motion.em
       className={cn(
         "inline-block italic font-medium relative text-primary",
-        "font-display"
+        "font-display",
+        "no-underline [text-decoration:none]"
       )}
       animate={{
         textShadow: [
@@ -319,18 +331,18 @@ function Hero({ onBuild, onChat }) {
   return (
     <section className="relative pt-28 sm:pt-32 pb-20 sm:pb-24 px-4 sm:px-6 overflow-hidden">
       {/* Diagonal cross grid pattern, masked to a top-centered ellipse so it
-          fades out gracefully toward the rest of the page. Lines pick up
-          the theme `--border` colour so the pattern reads right in both
-          light and dark mode. */}
+          fades out toward the rest of the page. --grid-line is defined per
+          theme in index.css so the pattern stays visible in both light and
+          dark mode. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
         style={{
           backgroundImage: `
-            linear-gradient(45deg, transparent 49%, hsl(var(--border)) 49%, hsl(var(--border)) 51%, transparent 51%),
-            linear-gradient(-45deg, transparent 49%, hsl(var(--border)) 49%, hsl(var(--border)) 51%, transparent 51%)
+            linear-gradient(45deg, transparent 47%, hsl(var(--grid-line)) 47%, hsl(var(--grid-line)) 53%, transparent 53%),
+            linear-gradient(-45deg, transparent 47%, hsl(var(--grid-line)) 47%, hsl(var(--grid-line)) 53%, transparent 53%)
           `,
-          backgroundSize: "40px 40px",
+          backgroundSize: "44px 44px",
           WebkitMaskImage:
             "radial-gradient(ellipse 70% 60% at 50% 0%, #000 60%, transparent 100%)",
           maskImage:
@@ -351,9 +363,12 @@ function Hero({ onBuild, onChat }) {
         className="mx-auto max-w-4xl text-center relative z-10"
       >
         <motion.div variants={fadeUp} transition={easing}>
-          <Badge variant="outline" className="mb-6 px-3 py-1 text-xs bg-background/80 backdrop-blur gap-1.5">
-            <GeminiLogo className="h-3 w-3" />
-            <span>Powered by Gemini. Built for hackathons.</span>
+          <Badge
+            variant="outline"
+            className="mb-7 px-4 py-1.5 text-sm bg-background/80 backdrop-blur gap-2 rounded-full"
+          >
+            <GeminiLogo className="h-4 w-4" />
+            <span className="font-medium">Powered by Gemini</span>
           </Badge>
         </motion.div>
 
@@ -463,7 +478,7 @@ function BentoSection({ onBuild }) {
         className={cn(
           "mx-auto max-w-5xl grid gap-3",
           "grid-cols-1 sm:grid-cols-2",
-          "md:grid-cols-6 md:auto-rows-[150px]"
+          "md:grid-cols-6 md:auto-rows-[130px]"
         )}
       >
         {/* Big hero card: terminal preview - 4 cols x 2 rows */}
@@ -481,7 +496,7 @@ function BentoSection({ onBuild }) {
           <Stat value="~3s" label="Time to first token" sub="cold key, p50" />
         </BentoCard>
 
-        {/* Architecture illustration: 3 cols x 2 rows, bottom-left */}
+        {/* Architecture illustration: 3 cols x 2 rows */}
         <BentoCard className="md:col-span-3 md:row-span-2">
           <ArchitectureIllustration />
         </BentoCard>
@@ -494,6 +509,16 @@ function BentoSection({ onBuild }) {
         {/* Handoff CTA: 3 cols x 1 row */}
         <BentoCard className="md:col-span-3 md:row-span-1">
           <HandoffCard onBuild={onBuild} />
+        </BentoCard>
+
+        {/* Voice input tile: 3 cols x 1 row */}
+        <BentoCard className="md:col-span-3 md:row-span-1">
+          <VoiceTile />
+        </BentoCard>
+
+        {/* Multi-key rotation tile: 3 cols x 1 row */}
+        <BentoCard className="md:col-span-3 md:row-span-1">
+          <MultiKeyTile />
         </BentoCard>
       </motion.div>
     </section>
@@ -542,6 +567,74 @@ function HandoffCard({ onBuild }) {
         Try it now
         <ArrowRightIcon className="h-3.5 w-3.5" />
       </Button>
+    </div>
+  );
+}
+
+function VoiceTile() {
+  return (
+    <div className="p-4 sm:p-5 flex items-center gap-4 h-full">
+      <div className="relative h-14 w-14 shrink-0">
+        <div className="absolute inset-0 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
+          <SpeakerLoudIcon className="h-5 w-5 text-primary" />
+        </div>
+        {[0, 0.6, 1.2].map((delay, i) => (
+          <motion.span
+            key={i}
+            aria-hidden
+            className="absolute inset-0 rounded-full border border-primary/40"
+            animate={{ scale: [1, 1.6], opacity: [0.5, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeOut", delay }}
+          />
+        ))}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <Pencil2Icon className="h-3 w-3 text-muted-foreground" />
+          <p className="text-sm font-semibold">Voice in. Repo out.</p>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+          Press the mic. Speak the idea. Watch the build start.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MultiKeyTile() {
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setActive((i) => (i + 1) % 3), 1400);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div className="p-4 sm:p-5 flex items-center gap-4 h-full">
+      <div className="flex items-center gap-1.5 shrink-0">
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className={cn(
+              "h-9 w-7 rounded-md border flex items-center justify-center",
+              active === i
+                ? "bg-primary/15 border-primary text-primary"
+                : "bg-muted border-border text-muted-foreground"
+            )}
+            animate={{ y: active === i ? -2 : 0 }}
+            transition={{ type: "spring", damping: 18, stiffness: 280 }}
+          >
+            <LockOpen1Icon className="h-3.5 w-3.5" />
+          </motion.div>
+        ))}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <TargetIcon className="h-3 w-3 text-muted-foreground" />
+          <p className="text-sm font-semibold">Multi-key rotation.</p>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+          Hits a rate limit on one Gemini key? Fails over to the next.
+        </p>
+      </div>
     </div>
   );
 }
@@ -729,7 +822,10 @@ function CounterStat({ target, suffix = "", label, sub }) {
 function Stat({ value, label, sub }) {
   return (
     <div className="h-full p-5 sm:p-6 flex flex-col justify-center">
-      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</p>
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium flex items-center gap-1.5">
+        <TimerIcon className="h-3 w-3 text-primary" />
+        {label}
+      </p>
       <p className="mt-1.5 text-3xl sm:text-4xl font-semibold tracking-tight">{value}</p>
       <p className="text-xs text-muted-foreground mt-1">{sub}</p>
     </div>
