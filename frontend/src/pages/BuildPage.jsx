@@ -19,7 +19,7 @@ import VoiceInputButton from "../components/build/VoiceInputButton";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
-import { ThemeToggle } from "../components/theme/ThemeToggle";
+import { AnimatedThemeToggler } from "../components/ui/animated-theme-toggler";
 import { cn } from "../lib/utils";
 
 const STACK_OPTIONS = [
@@ -66,7 +66,7 @@ export default function BuildPage() {
           <div className="ml-auto flex items-center gap-3">
             <StageStepper stage={stage} />
             <div className="h-5 w-px bg-border hidden md:block" />
-            <ThemeToggle />
+            <AnimatedThemeToggler />
             <Link to="/" className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent">
               <HomeIcon className="h-3.5 w-3.5" />
             </Link>

@@ -17,7 +17,7 @@ import { useChat } from "../hooks/useChat";
 import MessageBubble from "../components/MessageBubble";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { ThemeToggle } from "../components/theme/ThemeToggle";
+import { AnimatedThemeToggler } from "../components/ui/animated-theme-toggler";
 import { cn } from "../lib/utils";
 
 const MODES = [
@@ -110,7 +110,7 @@ export default function ChatDashboard() {
             </div>
           </div>
           <div className="hidden lg:flex items-center gap-2">
-            <ThemeToggle />
+            <AnimatedThemeToggler />
             <Button variant="default" size="sm" onClick={() => navigate("/build")}>
               <MagicWandIcon className="h-3.5 w-3.5" />
               Build Mode

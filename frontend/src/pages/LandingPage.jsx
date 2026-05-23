@@ -25,7 +25,7 @@ import {
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
-import { ThemeToggle } from "../components/theme/ThemeToggle";
+import { AnimatedThemeToggler } from "../components/ui/animated-theme-toggler";
 import { cn } from "../lib/utils";
 
 const REPO_URL = "https://github.com/Samarth1518/Projectra";
@@ -129,7 +129,7 @@ function Navbar({ onLaunch, onBuild }) {
 
         <div className="flex items-center justify-self-end gap-1.5 sm:gap-2">
           <GitHubStarPill />
-          <ThemeToggle />
+          <AnimatedThemeToggler />
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={onLaunch}>
             Chat
           </Button>
@@ -236,13 +236,56 @@ function Hero({ onBuild, onChat }) {
           variants={fadeUp} transition={easing}
           className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
         >
-          <Button size="lg" onClick={onBuild} className="w-full sm:w-auto">
-            Try Build Mode
-            <ArrowRightIcon className="h-4 w-4" />
-          </Button>
-          <Button size="lg" variant="outline" onClick={onChat} className="w-full sm:w-auto bg-background/80 backdrop-blur">
-            Open Chat
-          </Button>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", damping: 18, stiffness: 280 }}
+            className="relative w-full sm:w-auto group/cta"
+          >
+            {/* expanding chartreuse halo */}
+            <span
+              aria-hidden
+              className={cn(
+                "pointer-events-none absolute -inset-1 rounded-xl blur-xl opacity-0 group-hover/cta:opacity-100",
+                "bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.55),transparent_70%)]",
+                "transition-opacity duration-300"
+              )}
+            />
+            <Button
+              size="lg"
+              onClick={onBuild}
+              className={cn(
+                "relative w-full sm:w-auto overflow-hidden",
+                "hover:shadow-[0_10px_40px_-10px_hsl(var(--primary)/0.6)] hover:-translate-y-1"
+              )}
+            >
+              {/* shimmer sweep */}
+              <span
+                aria-hidden
+                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-primary-foreground/30 to-transparent group-hover/cta:translate-x-full transition-transform duration-700 ease-out"
+              />
+              <span className="relative inline-flex items-center gap-2">
+                Try Build Mode
+                <ArrowRightIcon className="h-4 w-4 transition-transform duration-300 group-hover/cta:translate-x-1" />
+              </span>
+            </Button>
+          </motion.div>
+
+          <motion.div
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", damping: 18, stiffness: 280 }}
+            className="w-full sm:w-auto"
+          >
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={onChat}
+              className="w-full sm:w-auto bg-background/80 backdrop-blur"
+            >
+              Open Chat
+            </Button>
+          </motion.div>
         </motion.div>
 
         <motion.div

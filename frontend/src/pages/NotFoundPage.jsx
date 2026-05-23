@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { ArrowLeftIcon, MagicWandIcon, ChatBubbleIcon, GitHubLogoIcon } from "@radix-ui/react-icons";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { ThemeToggle } from "../components/theme/ThemeToggle";
+import { AnimatedThemeToggler } from "../components/ui/animated-theme-toggler";
 
 const REPO_URL = "https://github.com/Samarth1518/Projectra";
 
@@ -20,7 +20,7 @@ export default function NotFoundPage() {
           <span className="font-semibold text-sm tracking-tight">Projectra</span>
         </Link>
         <div className="flex items-center gap-2">
-          <ThemeToggle />
+          <AnimatedThemeToggler />
           <a
             href={REPO_URL}
             target="_blank"
