@@ -53,7 +53,7 @@ and decisive. Keep your response concise and under 400 words. Use clear headings
 
 @app.route("/api/health")
 def health():
-    return {"status": "ok", "model": "gemini-2.0-flash-lite"}
+    return {"status": "ok", "model": "gemini-1.5-flash-latest"}
 
 @app.route("/api/ping")
 def ping():
@@ -67,28 +67,13 @@ def chat():
         data = request.get_json()
         user_message = data.get("message", "")
         mode = data.get("mode", "normal")
-        system_prompt = SYSTEM_PROMPTS.get(mode, SYSTEM_PROMPTS["normal"])
+        system_prompt = SYSTEM_PROMPTS.get(
+            mode, SYSTEM_PROMPTS["normal"]
+        )
         full_prompt = f"{system_prompt}\n\nUser: {user_message}"
         
-        try:
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    max_output_tokens=2048,
-                    temperature=0.7,
-                )
-            )
-        except Exception as first_error:
-            print("Primary model failed, falling back...", first_error)
-            fallback_model = genai.GenerativeModel("gemini-1.5-pro")
-            response = fallback_model.generate_content(
-                full_prompt,
-                generation_config=genai.types.GenerationConfig(
-                    max_output_tokens=2048,
-                    temperature=0.7,
-                )
-            )
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")
+        response = model.generate_content(full_prompt)
         
         return jsonify({
             "response": response.text,
@@ -96,7 +81,7 @@ def chat():
         })
         
     except Exception as e:
-        print("Final error:", e)
+        print(f"ERROR: {str(e)}")
         return jsonify({
             "response": "Something went wrong. Please try again.",
             "status": "error",
