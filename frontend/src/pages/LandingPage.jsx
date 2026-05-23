@@ -117,21 +117,21 @@ export default function LandingPage() {
 function Navbar({ onLaunch, onBuild }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 grid grid-cols-[auto_1fr_auto] md:grid-cols-3 items-center gap-2">
+        <Link to="/" className="flex items-center gap-2 shrink-0 justify-self-start">
           <div className="h-7 w-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
             <span className="text-primary font-bold text-sm">P</span>
           </div>
           <span className="font-semibold text-sm tracking-tight">Projectra</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+        <nav className="hidden md:flex items-center justify-self-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
           <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </nav>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="flex items-center justify-self-end gap-1.5 sm:gap-2">
           <GitHubStarPill />
           <ThemeToggle />
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={onLaunch}>
@@ -298,19 +298,21 @@ function BentoSection({ onBuild }) {
 }
 
 function BentoCard({ className, children }) {
+  // className must land on the motion.div (the grid child) so col-span /
+  // row-span classes actually apply. Putting them on the inner <Card>
+  // collapsed every cell to 1x1 in a flat row.
   return (
     <motion.div
       variants={fadeUp}
       transition={easing}
       whileHover={{ y: -3 }}
-      className="h-full"
+      className={cn("h-full min-h-[180px]", className)}
     >
       <Card
         className={cn(
           "h-full overflow-hidden relative group/bento",
           "shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)]",
-          "transition-all duration-300 hover:shadow-md hover:border-primary/30",
-          className
+          "transition-all duration-300 hover:shadow-md hover:border-primary/30"
         )}
       >
         {/* Soft primary glow on hover */}
