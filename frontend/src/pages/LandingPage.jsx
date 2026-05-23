@@ -1,6 +1,14 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useAnimationFrame,
+  useInView,
+  useMotionValue,
+  useScroll,
+  useTransform,
+  useReducedMotion,
+} from "framer-motion";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -14,24 +22,22 @@ import {
   TwitterLogoIcon,
   LinkedInLogoIcon,
   ArrowTopRightIcon,
+  StarIcon,
+  RocketIcon,
+  CubeIcon,
 } from "@radix-ui/react-icons";
 import { Button } from "../components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "../components/ui/card";
-import { Input } from "../components/ui/input";
+import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { ThemeToggle } from "../components/theme/ThemeToggle";
 import { cn } from "../lib/utils";
 
-/* ---------- motion presets (subtle, not bouncy) ---------- */
+const REPO_URL = "https://github.com/Samarth1518/Projectra";
+
+/* ---------- motion presets ---------- */
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 0, y: 14 },
   visible: { opacity: 1, y: 0 },
 };
 
@@ -45,54 +51,18 @@ const easing = { duration: 0.5, ease: [0.22, 1, 0.36, 1] };
 /* ---------- content ---------- */
 
 const FEATURES = [
-  {
-    icon: MagicWandIcon,
-    title: "Build Mode",
-    desc: "Describe a project. Get a complete runnable repo with files streaming in real time.",
-  },
-  {
-    icon: ChatBubbleIcon,
-    title: "AI Roadmaps",
-    desc: "Detailed development plans tailored to your idea, stack, and timeline.",
-  },
-  {
-    icon: LightningBoltIcon,
-    title: "Hackathon Mode",
-    desc: "MVP-focused guidance for time-boxed sprints. Skip lists, time breakdowns, fastest stacks.",
-  },
-  {
-    icon: LayersIcon,
-    title: "Stack Advisor",
-    desc: "Opinionated recommendations with pros, cons, and clear final picks.",
-  },
-  {
-    icon: ReaderIcon,
-    title: "Beginner Mode",
-    desc: "Friendly explanations, numbered steps, beginner-safe tooling defaults.",
-  },
-  {
-    icon: CodeIcon,
-    title: "AI Critique",
-    desc: "A second AI judges your generated repo and suggests concrete improvements.",
-  },
+  { icon: MagicWandIcon,     title: "Build Mode",      desc: "Describe a project. Get a runnable repo with files streaming in real time." },
+  { icon: ChatBubbleIcon,    title: "AI Roadmaps",     desc: "Detailed development plans tailored to your idea, stack, and timeline." },
+  { icon: LightningBoltIcon, title: "Hackathon Mode",  desc: "MVP-focused guidance for sprints. Skip lists, time breakdowns, fastest stacks." },
+  { icon: LayersIcon,        title: "Stack Advisor",   desc: "Opinionated recommendations with pros, cons, and clear final picks." },
+  { icon: ReaderIcon,        title: "Beginner Mode",   desc: "Friendly explanations, numbered steps, beginner-safe tooling defaults." },
+  { icon: CodeIcon,          title: "AI Critique",     desc: "A second AI judges your generated repo and suggests concrete improvements." },
 ];
 
 const STEPS = [
-  {
-    n: "01",
-    title: "Describe",
-    desc: "Type a sentence or speak it into the mic. Pick a stack or let the AI choose.",
-  },
-  {
-    n: "02",
-    title: "Generate",
-    desc: "Watch the architecture, file tree, and source code stream into the workspace.",
-  },
-  {
-    n: "03",
-    title: "Ship",
-    desc: "Download a ZIP, open the project in StackBlitz, or have the AI critique your build.",
-  },
+  { n: "01", title: "Describe", desc: "Type a sentence or speak it into the mic. Pick a stack or let the AI choose." },
+  { n: "02", title: "Generate", desc: "Watch the architecture, file tree, and source code stream into the workspace." },
+  { n: "03", title: "Ship",     desc: "Download a ZIP, open in StackBlitz, or have the AI critique your build." },
 ];
 
 const FOOTER_LINKS = [
@@ -111,7 +81,7 @@ const FOOTER_LINKS = [
       { label: "Documentation", to: "#" },
       { label: "Changelog", to: "#" },
       { label: "Status", to: "#" },
-      { label: "GitHub", to: "https://github.com/Samarth1518/Projectra", external: true },
+      { label: "GitHub", to: REPO_URL, external: true },
     ],
   },
   {
@@ -129,57 +99,46 @@ const FOOTER_LINKS = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
       <Navbar onLaunch={() => navigate("/chat")} onBuild={() => navigate("/build")} />
-
       <Hero onBuild={() => navigate("/build")} onChat={() => navigate("/chat")} />
-
-      <BentoSection />
-
+      <BentoSection onBuild={() => navigate("/build")} />
       <FeaturesSection />
-
       <HowItWorksSection />
-
-      <CtaSection
-        email={email}
-        onEmail={setEmail}
-        onSubmit={(e) => { e.preventDefault(); navigate("/chat"); }}
-      />
-
+      <WorkflowSection />
       <FooterSection />
     </div>
   );
 }
 
-/* ---------- sections ---------- */
+/* ---------- nav ---------- */
 
 function Navbar({ onLaunch, onBuild }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/60 bg-background/70 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-6 h-14 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 h-14 flex items-center justify-between gap-2">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <div className="h-7 w-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
             <span className="text-primary font-bold text-sm">P</span>
           </div>
           <span className="font-semibold text-sm tracking-tight">Projectra</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
+        <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="https://github.com/Samarth1518/Projectra" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
+          <a href={REPO_URL} target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <GitHubStarPill />
           <ThemeToggle />
           <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={onLaunch}>
-            Open Chat
+            Chat
           </Button>
           <Button size="sm" onClick={onBuild}>
-            Build Mode
+            Build
             <ArrowRightIcon className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -188,18 +147,38 @@ function Navbar({ onLaunch, onBuild }) {
   );
 }
 
+function GitHubStarPill() {
+  return (
+    <a
+      href={REPO_URL}
+      target="_blank"
+      rel="noreferrer"
+      className={cn(
+        "hidden sm:inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border bg-background",
+        "text-xs font-medium text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+      )}
+      title="Star us on GitHub"
+    >
+      <GitHubLogoIcon className="h-3.5 w-3.5" />
+      <span>Star</span>
+      <span className="inline-flex items-center justify-center h-5 px-1.5 rounded-full bg-primary/15 text-primary text-[10px] font-semibold">
+        <StarIcon className="h-2.5 w-2.5 mr-0.5" />
+        Repo
+      </span>
+    </a>
+  );
+}
+
+/* ---------- hero ---------- */
+
 function Hero({ onBuild, onChat }) {
-  // Subtle parallax: the bg image translates slower than the page so it
-  // appears to recede as you scroll. Range is intentionally small so it
-  // feels like depth, not motion.
+  const reduce = useReducedMotion();
   const { scrollY } = useScroll();
-  const imageY = useTransform(scrollY, [0, 700], [0, 120]);
-  const imageScale = useTransform(scrollY, [0, 700], [1, 1.08]);
+  const imageY     = useTransform(scrollY, [0, 700], [0, reduce ? 0 : 120]);
+  const imageScale = useTransform(scrollY, [0, 700], [1, reduce ? 1 : 1.08]);
 
   return (
-    <section className="relative pt-32 pb-24 px-6 overflow-hidden">
-      {/* Parallax background. The image lives inside its own clipped layer
-          so the translate doesn't affect surrounding sections. */}
+    <section className="relative pt-28 sm:pt-32 pb-20 sm:pb-24 px-4 sm:px-6 overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <motion.div
           style={{ y: imageY, scale: imageScale }}
@@ -208,7 +187,7 @@ function Hero({ onBuild, onChat }) {
           <img
             src="/hero.jpg"
             alt=""
-            className="w-full h-full object-cover opacity-30 dark:opacity-35"
+            className="w-full h-full object-cover opacity-25 dark:opacity-30"
           />
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
@@ -221,23 +200,23 @@ function Hero({ onBuild, onChat }) {
       >
         <motion.div variants={fadeUp} transition={easing}>
           <Badge variant="outline" className="mb-6 px-3 py-1 text-xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
             Gemini-powered. Built for hackathons.
           </Badge>
         </motion.div>
 
         <motion.h1
           variants={fadeUp} transition={easing}
-          className="text-4xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]"
+          className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.05]"
         >
           From idea to a running repo,
-          <br />
+          <br className="hidden sm:block" />{" "}
           <span className="text-primary">in under a minute.</span>
         </motion.h1>
 
         <motion.p
           variants={fadeUp} transition={easing}
-          className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+          className="mt-5 sm:mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2"
         >
           Projectra is the AI dev companion that turns a single sentence
           into a complete project. Streamed file by file, ready to download
@@ -246,20 +225,20 @@ function Hero({ onBuild, onChat }) {
 
         <motion.div
           variants={fadeUp} transition={easing}
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
+          className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
         >
-          <Button size="lg" onClick={onBuild} className="shadow-sm">
+          <Button size="lg" onClick={onBuild} className="w-full sm:w-auto">
             Try Build Mode
             <ArrowRightIcon className="h-4 w-4" />
           </Button>
-          <Button size="lg" variant="outline" onClick={onChat}>
+          <Button size="lg" variant="outline" onClick={onChat} className="w-full sm:w-auto">
             Open Chat
           </Button>
         </motion.div>
 
         <motion.div
           variants={fadeUp} transition={easing}
-          className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground"
+          className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
         >
           <span className="flex items-center gap-1.5"><CheckIcon className="h-3.5 w-3.5 text-primary" /> No signup</span>
           <span className="flex items-center gap-1.5"><CheckIcon className="h-3.5 w-3.5 text-primary" /> Free tier</span>
@@ -270,51 +249,60 @@ function Hero({ onBuild, onChat }) {
   );
 }
 
-function BentoSection() {
+/* ---------- bento (proper asymmetric grid) ---------- */
+
+function BentoSection({ onBuild }) {
   return (
-    <section className="px-6 pb-24">
+    <section className="px-4 sm:px-6 pb-20 sm:pb-24">
       <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}
         variants={stagger}
-        className="mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-4 md:auto-rows-[180px]"
+        className={cn(
+          "mx-auto max-w-6xl grid gap-3 sm:gap-4",
+          "grid-cols-1 md:grid-cols-4 md:auto-rows-[160px]"
+        )}
       >
-        <BentoCard className="md:col-span-2 md:row-span-2" variants={fadeUp} transition={easing}>
-          <div className="flex flex-col h-full justify-between p-7">
-            <div>
-              <Badge variant="muted" className="mb-3">Live streaming</Badge>
-              <h3 className="text-2xl font-semibold tracking-tight">Watch your project assemble itself.</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                Architecture diagram, file tree, and per-file code arrive in
-                real time. Click any file to see it stream.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-muted/40 shadow-[inset_0_1px_0_hsl(var(--background))] p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
-              <div className="text-primary">{"$ projectra build"}</div>
-              <div>plan: complete</div>
-              <div>diagram: rendered</div>
-              <div>files: 5 queued</div>
-              <div className="text-foreground">writing src/App.jsx<span className="inline-block w-1.5 h-3 ml-1 bg-foreground align-middle animate-pulse" /></div>
-            </div>
-          </div>
+        {/* Big hero card: terminal preview + animated typewriter line */}
+        <BentoCard className="md:col-span-2 md:row-span-2">
+          <TerminalPreview />
         </BentoCard>
 
-        <BentoCard variants={fadeUp} transition={easing}>
-          <Stat label="Files / build" value="6" sub="avg minimal stack" />
+        {/* Architecture illustration card */}
+        <BentoCard className="md:col-span-2 md:row-span-2">
+          <ArchitectureIllustration />
         </BentoCard>
 
-        <BentoCard variants={fadeUp} transition={easing}>
-          <Stat label="Time to first token" value="~3s" sub="cold key, p50" />
+        {/* Stat: animated counter */}
+        <BentoCard className="md:col-span-1">
+          <CounterStat target={6} suffix="" label="Files / build" sub="avg minimal stack" />
         </BentoCard>
 
-        <BentoCard className="md:col-span-2" variants={fadeUp} transition={easing}>
-          <div className="p-6 flex items-center gap-4">
-            <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
-              <MagicWandIcon className="h-5 w-5 text-accent-foreground" />
+        {/* Stat: text */}
+        <BentoCard className="md:col-span-1">
+          <Stat value="~3s" label="Time to first token" sub="cold key, p50" />
+        </BentoCard>
+
+        {/* GitHub star card */}
+        <BentoCard className="md:col-span-2">
+          <GitHubStarCard />
+        </BentoCard>
+
+        {/* Handoff card (full width on its row) */}
+        <BentoCard className="md:col-span-4">
+          <div className="p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 h-full">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1">
+              <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                <MagicWandIcon className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">Open in StackBlitz, ZIP, or push to GitHub.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">One click handoff. No lock-in.</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium">Open in StackBlitz, ZIP, or push to GitHub.</p>
-              <p className="text-xs text-muted-foreground mt-0.5">One click handoff. No lock-in.</p>
-            </div>
+            <Button size="sm" onClick={onBuild} className="sm:ml-auto self-stretch sm:self-auto">
+              Try it now
+              <ArrowRightIcon className="h-3.5 w-3.5" />
+            </Button>
           </div>
         </BentoCard>
       </motion.div>
@@ -322,58 +310,286 @@ function BentoSection() {
   );
 }
 
-function BentoCard({ className, children, variants, transition }) {
+function BentoCard({ className, children }) {
   return (
-    <motion.div variants={variants} transition={transition}>
-      <Card className={cn("h-full overflow-hidden shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)]", className)}>
+    <motion.div
+      variants={fadeUp}
+      transition={easing}
+      whileHover={{ y: -3 }}
+      className="h-full"
+    >
+      <Card
+        className={cn(
+          "h-full overflow-hidden relative",
+          "shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)]",
+          "transition-shadow duration-300 hover:shadow-md",
+          className
+        )}
+      >
         {children}
       </Card>
     </motion.div>
   );
 }
 
-function Stat({ label, value, sub }) {
+/* ---------- bento cell contents ---------- */
+
+function TerminalPreview() {
+  const phrases = [
+    "writing src/App.jsx",
+    "writing src/main.jsx",
+    "writing index.html",
+    "writing package.json",
+  ];
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setActive((i) => (i + 1) % phrases.length), 1800);
+    return () => clearInterval(id);
+  }, [phrases.length]);
+
   return (
-    <div className="h-full p-6 flex flex-col justify-center">
-      <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">{label}</p>
-      <p className="mt-1.5 text-3xl font-semibold tracking-tight">{value}</p>
+    <div className="flex flex-col h-full justify-between p-5 sm:p-7">
+      <div>
+        <Badge variant="muted" className="mb-3">Live streaming</Badge>
+        <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">
+          Watch your project assemble itself.
+        </h3>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          Architecture diagram, file tree, and per-file code arrive in real time. Click any file to see it stream.
+        </p>
+      </div>
+
+      <div className="mt-4 rounded-lg border border-border bg-muted/40 shadow-[inset_0_1px_0_hsl(var(--background))] p-4 font-mono text-[11px] leading-relaxed text-muted-foreground">
+        <div className="text-primary">{"$ projectra build \"a todo app\""}</div>
+        <div>plan: complete</div>
+        <div>diagram: rendered</div>
+        <div>files: 5 queued</div>
+        <div className="text-foreground flex items-center min-h-[18px]">
+          <motion.span
+            key={active}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            {phrases[active]}
+          </motion.span>
+          <span className="inline-block w-1.5 h-3 ml-1 bg-foreground align-middle animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArchitectureIllustration() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+
+  return (
+    <div ref={ref} className="h-full w-full flex flex-col p-5 sm:p-7">
+      <Badge variant="muted" className="mb-3 self-start">Architecture</Badge>
+      <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">
+        Diagrams generated alongside the code.
+      </h3>
+      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+        Mermaid renders inline so you see the system before any line of code lands.
+      </p>
+
+      <div className="flex-1 mt-4 grid place-items-center min-h-[140px]">
+        <svg
+          viewBox="0 0 320 140"
+          className="w-full max-w-[320px] h-auto"
+          fill="none"
+          stroke="currentColor"
+        >
+          {/* edges (drawn first so nodes overlap them) */}
+          <motion.path
+            d="M 60 70 L 145 70"
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            initial={{ pathLength: 0 }}
+            animate={inView ? { pathLength: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          />
+          <motion.path
+            d="M 175 70 L 260 70"
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth="1.5"
+            strokeDasharray="4 4"
+            initial={{ pathLength: 0 }}
+            animate={inView ? { pathLength: 1 } : {}}
+            transition={{ duration: 0.6, delay: 0.5 }}
+          />
+
+          {/* nodes */}
+          <NodeBlock x={20} y={50} w={40} label="Idea"   inView={inView} delay={0.0} />
+          <NodeBlock x={145} y={50} w={30} label="AI"    inView={inView} delay={0.3} primary />
+          <NodeBlock x={260} y={50} w={42} label="Repo" inView={inView} delay={0.6} />
+
+          {/* travelling pulse */}
+          {inView && (
+            <motion.circle
+              r="3"
+              fill="hsl(var(--primary))"
+              animate={{
+                cx: [60, 145, 260, 60],
+                cy: [70, 70, 70, 70],
+                opacity: [0, 1, 1, 0],
+              }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+              style={{ filter: "drop-shadow(0 0 6px hsl(var(--primary)))" }}
+            />
+          )}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function NodeBlock({ x, y, w, label, inView, delay, primary }) {
+  return (
+    <motion.g
+      initial={{ opacity: 0, y: 6 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <rect
+        x={x}
+        y={y}
+        width={w}
+        height={40}
+        rx="8"
+        ry="8"
+        fill={primary ? "hsl(var(--primary) / 0.15)" : "hsl(var(--card))"}
+        stroke={primary ? "hsl(var(--primary))" : "hsl(var(--border))"}
+        strokeWidth="1.2"
+      />
+      <text
+        x={x + w / 2}
+        y={y + 26}
+        textAnchor="middle"
+        fontSize="11"
+        fontFamily="Inter, system-ui, sans-serif"
+        fill={primary ? "hsl(var(--primary))" : "hsl(var(--foreground))"}
+        fontWeight="500"
+      >
+        {label}
+      </text>
+    </motion.g>
+  );
+}
+
+function CounterStat({ target, suffix = "", label, sub }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const start = performance.now();
+    const dur = 900;
+    let raf;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / dur);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setVal(Math.round(eased * target));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, target]);
+
+  return (
+    <div ref={ref} className="h-full p-5 sm:p-6 flex flex-col justify-center">
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</p>
+      <p className="mt-1.5 text-3xl sm:text-4xl font-semibold tracking-tight tabular-nums">
+        {val}
+        {suffix}
+      </p>
       <p className="text-xs text-muted-foreground mt-1">{sub}</p>
     </div>
   );
 }
 
+function Stat({ value, label, sub }) {
+  return (
+    <div className="h-full p-5 sm:p-6 flex flex-col justify-center">
+      <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">{label}</p>
+      <p className="mt-1.5 text-3xl sm:text-4xl font-semibold tracking-tight">{value}</p>
+      <p className="text-xs text-muted-foreground mt-1">{sub}</p>
+    </div>
+  );
+}
+
+function GitHubStarCard() {
+  return (
+    <a
+      href={REPO_URL}
+      target="_blank"
+      rel="noreferrer"
+      className="block h-full p-5 sm:p-6 group"
+    >
+      <div className="flex items-start gap-4 h-full">
+        <div className="h-11 w-11 rounded-lg bg-foreground text-background flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105">
+          <GitHubLogoIcon className="h-5 w-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold truncate">Like Projectra?</p>
+            <StarIcon className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            Star the repo on GitHub. It helps more hackathon teams find it.
+          </p>
+          <span className="inline-flex items-center gap-1.5 mt-3 text-xs font-medium text-primary group-hover:gap-2.5 transition-all">
+            Open repo
+            <ArrowTopRightIcon className="h-3 w-3" />
+          </span>
+        </div>
+      </div>
+    </a>
+  );
+}
+
+/* ---------- features ---------- */
+
 function FeaturesSection() {
   return (
-    <section id="features" className="px-6 py-24 border-t border-border/60">
+    <section id="features" className="px-4 sm:px-6 py-20 sm:py-24 border-t border-border/60">
       <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.15 }}
         variants={stagger}
         className="mx-auto max-w-6xl"
       >
-        <motion.div variants={fadeUp} transition={easing} className="max-w-2xl mb-12">
+        <motion.div variants={fadeUp} transition={easing} className="max-w-2xl mb-10 sm:mb-12">
           <Badge variant="muted" className="mb-3">Features</Badge>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
             Six modes, one chat box.
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            Each mode is a different lens on the same conversation. Switch
-            anytime without losing context.
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground">
+            Each mode is a different lens on the same conversation. Switch anytime without losing context.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {FEATURES.map((f) => {
             const Icon = f.icon;
             return (
-              <motion.div key={f.title} variants={fadeUp} transition={easing}>
-                <Card className="h-full p-6 shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)]">
-                  <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center mb-4">
-                    <Icon className="h-4.5 w-4.5 text-accent-foreground" />
+              <motion.div
+                key={f.title}
+                variants={fadeUp}
+                transition={easing}
+                whileHover={{ y: -2 }}
+                className="h-full"
+              >
+                <Card className="h-full p-5 sm:p-6 shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)] transition-shadow hover:shadow-md">
+                  <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center mb-4 transition-transform duration-300 hover:rotate-6">
+                    <Icon className="h-4 w-4 text-accent-foreground" />
                   </div>
                   <h3 className="font-semibold text-base">{f.title}</h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                    {f.desc}
-                  </p>
+                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{f.desc}</p>
                 </Card>
               </motion.div>
             );
@@ -384,9 +600,12 @@ function FeaturesSection() {
   );
 }
 
+/* ---------- how it works (with travelling dot) ---------- */
+
 function HowItWorksSection() {
+  const reduce = useReducedMotion();
   return (
-    <section id="how" className="px-6 py-24 border-t border-border/60 bg-muted/30">
+    <section id="how" className="px-4 sm:px-6 py-20 sm:py-24 border-t border-border/60 bg-muted/30">
       <motion.div
         initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
         variants={stagger}
@@ -394,20 +613,50 @@ function HowItWorksSection() {
       >
         <motion.div variants={fadeUp} transition={easing}>
           <Badge variant="muted" className="mb-3">How it works</Badge>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
             Three steps, no setup.
           </h2>
         </motion.div>
 
-        <div className="relative mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="hidden md:block absolute left-[16%] right-[16%] top-[28px] h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-          {STEPS.map((s) => (
-            <motion.div key={s.n} variants={fadeUp} transition={easing} className="flex flex-col items-center text-center">
+        <div className="relative mt-12 sm:mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* horizontal connector + travelling dot, desktop only */}
+          <div className="hidden md:block absolute left-[16.5%] right-[16.5%] top-[28px] h-px overflow-visible pointer-events-none">
+            <div className="h-full w-full bg-gradient-to-r from-transparent via-border to-transparent" />
+            {!reduce && (
+              <motion.span
+                className="absolute top-1/2 -translate-y-1/2 -ml-1.5 h-3 w-3 rounded-full bg-primary"
+                style={{
+                  boxShadow: "0 0 14px hsl(var(--primary) / 0.6), 0 0 4px hsl(var(--primary))",
+                }}
+                initial={{ left: "0%" }}
+                animate={{ left: ["0%", "0%", "50%", "50%", "100%", "100%", "0%"] }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  times: [0, 0.08, 0.42, 0.5, 0.84, 0.95, 1],
+                }}
+              />
+            )}
+          </div>
+
+          {STEPS.map((s, i) => (
+            <motion.div
+              key={s.n}
+              variants={fadeUp}
+              transition={easing}
+              className="flex flex-col items-center text-center relative"
+            >
               <div className="relative h-14 w-14 rounded-full bg-background border border-border flex items-center justify-center font-mono text-sm font-semibold text-primary shadow-sm">
                 {s.n}
               </div>
               <h3 className="mt-5 font-semibold text-base">{s.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">{s.desc}</p>
+
+              {/* mobile vertical connector between steps */}
+              {i < STEPS.length - 1 && (
+                <div className="md:hidden h-8 w-px bg-border mt-6" />
+              )}
             </motion.div>
           ))}
         </div>
@@ -416,51 +665,195 @@ function HowItWorksSection() {
   );
 }
 
-function CtaSection({ email, onEmail, onSubmit }) {
+/* ---------- workflow / illustration showcase (replaces email CTA) ---------- */
+
+function WorkflowSection() {
   return (
-    <section className="px-6 py-24 border-t border-border/60">
+    <section className="px-4 sm:px-6 py-20 sm:py-24 border-t border-border/60">
       <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.3 }}
+        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
         variants={stagger}
-        className="mx-auto max-w-3xl text-center"
+        className="mx-auto max-w-6xl"
       >
-        <motion.h2 variants={fadeUp} transition={easing} className="text-3xl md:text-4xl font-semibold tracking-tight">
-          Ready to ship your next project?
-        </motion.h2>
-        <motion.p variants={fadeUp} transition={easing} className="mt-3 text-muted-foreground">
-          Drop your email and we will save your spot. No credit card required.
-        </motion.p>
+        <motion.div variants={fadeUp} transition={easing} className="max-w-2xl mx-auto text-center mb-12 sm:mb-16">
+          <Badge variant="muted" className="mb-3">Under the hood</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">
+            From a single sentence to a working repo.
+          </h2>
+          <p className="mt-3 text-sm sm:text-base text-muted-foreground">
+            Three quiet illustrations of what happens after you press Build.
+          </p>
+        </motion.div>
 
-        <motion.form
-          variants={fadeUp} transition={easing}
-          onSubmit={onSubmit}
-          className="mt-8 flex flex-col sm:flex-row gap-2 max-w-md mx-auto"
-        >
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => onEmail(e.target.value)}
-            required
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+          <IllustrationTile
+            badge="Step 1"
+            title="Architect plans the project"
+            desc="Gemini emits a strict JSON plan with a summary, Mermaid diagram, and a minimal file manifest."
+            Illustration={IdeaIllustration}
+            Icon={RocketIcon}
           />
-          <Button type="submit" className="sm:w-auto">
-            Get started
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          </Button>
-        </motion.form>
-
-        <motion.p variants={fadeUp} transition={easing} className="mt-4 text-xs text-muted-foreground">
-          Free forever for the first 5 builds per day. Upgrade anytime.
-        </motion.p>
+          <IllustrationTile
+            badge="Step 2"
+            title="Coder writes each file"
+            desc="One focused per-file prompt at a time. Output streams chunk-by-chunk to the viewer."
+            Illustration={FilesIllustration}
+            Icon={CubeIcon}
+          />
+          <IllustrationTile
+            badge="Step 3"
+            title="Ship the result"
+            desc="Download as ZIP, open in StackBlitz, or critique it with a second AI judge."
+            Illustration={ShipIllustration}
+            Icon={MagicWandIcon}
+          />
+        </div>
       </motion.div>
     </section>
   );
 }
 
+function IllustrationTile({ badge, title, desc, Illustration, Icon }) {
+  return (
+    <motion.div variants={fadeUp} transition={easing} whileHover={{ y: -3 }} className="h-full">
+      <Card className="h-full p-5 sm:p-6 flex flex-col shadow-[inset_0_1px_0_hsl(var(--card-foreground)/0.04)] transition-shadow hover:shadow-md">
+        <div className="h-32 sm:h-40 -mx-1 mb-4 rounded-md bg-muted/40 border border-border overflow-hidden flex items-center justify-center">
+          <Illustration />
+        </div>
+        <div className="flex items-center gap-2 mb-1.5">
+          <Badge variant="muted" className="text-[10px]">{badge}</Badge>
+          <Icon className="h-3 w-3 text-muted-foreground" />
+        </div>
+        <h3 className="font-semibold text-base">{title}</h3>
+        <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">{desc}</p>
+      </Card>
+    </motion.div>
+  );
+}
+
+function IdeaIllustration() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  return (
+    <svg ref={ref} viewBox="0 0 240 120" className="w-full h-full" fill="none">
+      {/* speech bubble */}
+      <motion.rect
+        x="22" y="36" width="120" height="44" rx="14"
+        fill="hsl(var(--card))"
+        stroke="hsl(var(--border))"
+        strokeWidth="1.2"
+        initial={{ opacity: 0, y: 6 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.45, delay: 0.05 }}
+      />
+      <motion.path
+        d="M 50 80 L 56 90 L 64 80 Z"
+        fill="hsl(var(--card))"
+        stroke="hsl(var(--border))"
+        strokeWidth="1.2"
+        initial={{ opacity: 0 }}
+        animate={inView ? { opacity: 1 } : {}}
+        transition={{ duration: 0.4, delay: 0.18 }}
+      />
+      {/* idea text rows */}
+      <motion.rect x="34" y="46" width="60" height="6" rx="3" fill="hsl(var(--muted-foreground)/0.45)"
+        initial={{ scaleX: 0, originX: 0 }} animate={inView ? { scaleX: 1 } : {}} transition={{ duration: 0.5, delay: 0.25 }} />
+      <motion.rect x="34" y="58" width="96" height="6" rx="3" fill="hsl(var(--muted-foreground)/0.3)"
+        initial={{ scaleX: 0, originX: 0 }} animate={inView ? { scaleX: 1 } : {}} transition={{ duration: 0.5, delay: 0.4 }} />
+
+      {/* spark */}
+      <motion.g
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={inView ? { opacity: 1, scale: 1 } : {}}
+        transition={{ duration: 0.5, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformOrigin: "180px 50px" }}
+      >
+        <circle cx="180" cy="50" r="22" fill="hsl(var(--primary)/0.18)" stroke="hsl(var(--primary))" strokeWidth="1.2" />
+        <path d="M 180 38 L 180 62 M 168 50 L 192 50" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" />
+      </motion.g>
+    </svg>
+  );
+}
+
+function FilesIllustration() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  const files = [
+    { y: 22, w: 110 },
+    { y: 44, w: 130 },
+    { y: 66, w: 100 },
+    { y: 88, w: 120 },
+  ];
+  return (
+    <svg ref={ref} viewBox="0 0 240 120" className="w-full h-full" fill="none">
+      {files.map((f, i) => (
+        <motion.g key={i}
+          initial={{ opacity: 0, x: -10 }}
+          animate={inView ? { opacity: 1, x: 0 } : {}}
+          transition={{ duration: 0.4, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <rect x="30" y={f.y} width={f.w} height="14" rx="4"
+            fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1" />
+          <rect x="36" y={f.y + 4} width="8" height="6" rx="2" fill="hsl(var(--primary)/0.7)" />
+          <rect x="50" y={f.y + 5} width={f.w - 30} height="4" rx="2" fill="hsl(var(--muted-foreground)/0.35)" />
+        </motion.g>
+      ))}
+      {/* a primary "writing" highlight on file 3 */}
+      <motion.rect
+        x="30" y="66" width="100" height="14" rx="4"
+        fill="none"
+        stroke="hsl(var(--primary))"
+        strokeWidth="1.4"
+        initial={{ opacity: 0 }}
+        animate={inView ? { opacity: [0, 1, 1, 0, 0] } : {}}
+        transition={{ duration: 2.4, delay: 0.6, repeat: Infinity, repeatDelay: 1.2 }}
+      />
+    </svg>
+  );
+}
+
+function ShipIllustration() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.4 });
+  return (
+    <svg ref={ref} viewBox="0 0 240 120" className="w-full h-full" fill="none">
+      {/* box */}
+      <motion.g
+        initial={{ opacity: 0, y: 8 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <rect x="58" y="42" width="74" height="58" rx="6" fill="hsl(var(--card))" stroke="hsl(var(--border))" strokeWidth="1.2" />
+        <path d="M 58 56 L 132 56" stroke="hsl(var(--border))" strokeWidth="1.2" />
+        <rect x="86" y="38" width="18" height="6" rx="2" fill="hsl(var(--primary)/0.6)" />
+      </motion.g>
+      {/* arrow up + sparkles */}
+      <motion.g
+        initial={{ opacity: 0, y: 10 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.5, delay: 0.4 }}
+      >
+        <path d="M 170 78 L 196 52 M 184 52 L 196 52 L 196 64" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </motion.g>
+      {/* sparkles */}
+      {[{cx:152,cy:46}, {cx:208,cy:78}, {cx:140,cy:96}].map((p, i) => (
+        <motion.circle key={i} cx={p.cx} cy={p.cy} r="2"
+          fill="hsl(var(--primary))"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={inView ? { opacity: [0, 1, 0], scale: [0.5, 1, 0.5] } : {}}
+          transition={{ duration: 1.6, delay: 0.6 + i * 0.15, repeat: Infinity, repeatDelay: 1.4 }}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/* ---------- footer ---------- */
+
 function FooterSection() {
   return (
-    <footer className="px-6 py-16 border-t border-border/60 bg-muted/20">
-      <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-5 gap-8">
+    <footer className="px-4 sm:px-6 py-14 sm:py-16 border-t border-border/60 bg-muted/20">
+      <div className="mx-auto max-w-6xl grid grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8">
         <div className="col-span-2">
           <Link to="/" className="flex items-center gap-2">
             <div className="h-7 w-7 rounded-md bg-primary/15 border border-primary/30 flex items-center justify-center">
@@ -469,11 +862,10 @@ function FooterSection() {
             <span className="font-semibold text-sm tracking-tight">Projectra</span>
           </Link>
           <p className="mt-3 text-sm text-muted-foreground max-w-xs leading-relaxed">
-            The AI companion that turns a sentence into a running repo.
-            Built for the GDG PESCE Mandya hackathon.
+            The AI companion that turns a sentence into a running repo. Built for the GDG PESCE Mandya hackathon.
           </p>
           <div className="mt-5 flex items-center gap-3">
-            <FooterIcon href="https://github.com/Samarth1518/Projectra" icon={GitHubLogoIcon} label="GitHub" />
+            <FooterIcon href={REPO_URL} icon={GitHubLogoIcon} label="GitHub" />
             <FooterIcon href="#" icon={TwitterLogoIcon} label="Twitter" />
             <FooterIcon href="#" icon={LinkedInLogoIcon} label="LinkedIn" />
           </div>
@@ -511,7 +903,7 @@ function FooterSection() {
         ))}
       </div>
 
-      <div className="mx-auto max-w-6xl mt-12 pt-6 border-t border-border/60 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+      <div className="mx-auto max-w-6xl mt-10 sm:mt-12 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground text-center sm:text-left">
         <p>(c) {new Date().getFullYear()} Projectra. MIT licensed.</p>
         <div className="flex items-center gap-5">
           <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
