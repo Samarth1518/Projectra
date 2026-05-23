@@ -127,9 +127,18 @@ export default function ChatDashboard() {
               <span className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] font-medium text-gray-400 border border-white/10">Active</span>
             </div>
           </div>
-          <button onClick={() => navigate('/')} className="hidden lg:flex items-center gap-1.5 text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
-            <ArrowLeft size={14} /> Home
-          </button>
+          <div className="hidden lg:flex items-center gap-2">
+            <button
+              onClick={() => navigate('/build')}
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium text-white transition-all"
+              style={{ background: 'linear-gradient(135deg, #a78bfa, #f472b6)', boxShadow: '0 0 14px rgba(167,139,250,0.35)' }}
+            >
+              ✨ Build Mode
+            </button>
+            <button onClick={() => navigate('/')} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors">
+              <ArrowLeft size={14} /> Home
+            </button>
+          </div>
         </div>
 
         {/* Chat Messages */}

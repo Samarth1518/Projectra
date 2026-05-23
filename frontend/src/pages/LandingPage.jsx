@@ -93,12 +93,21 @@ export default function LandingPage() {
       {/* Fixed Navbar */}
       <nav className="fixed top-0 left-0 w-full z-50 glass px-6 py-4 flex justify-between items-center">
         <div className="font-bold text-2xl gradient-text">Projectra AI</div>
-        <button 
-          onClick={() => navigate('/chat')}
-          className="px-5 py-2 rounded-xl text-white font-medium border border-blue-500 hover:neon-glow transition-all duration-300 bg-blue-500/10"
-        >
-          Launch App →
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/build')}
+            className="px-4 py-2 rounded-xl text-white font-medium border border-purple-400 hover:bg-purple-500/10 transition-all duration-300 text-sm flex items-center gap-1.5"
+            style={{ background: 'linear-gradient(135deg, rgba(167,139,250,0.15), rgba(244,114,182,0.15))' }}
+          >
+            ✨ Build Mode
+          </button>
+          <button
+            onClick={() => navigate('/chat')}
+            className="px-5 py-2 rounded-xl text-white font-medium border border-blue-500 hover:neon-glow transition-all duration-300 bg-blue-500/10"
+          >
+            Launch App →
+          </button>
+        </div>
       </nav>
 
       {/* Hero Section */}
@@ -124,17 +133,24 @@ export default function LandingPage() {
             Your AI-powered developer assistant. From idea to deployment — project roadmaps, tech stack advice, and hackathon MVP plans, instantly.
           </motion.p>
           
-          <motion.div 
+          <motion.div
             initial="hidden" animate="visible" variants={fadeUp} transition={{ delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4 w-full justify-center"
           >
-            <button 
-              onClick={() => navigate('/chat')}
-              className="px-8 py-4 bg-blue-500 text-white rounded-xl font-bold text-lg hover:bg-blue-400 neon-glow transition-all duration-300"
+            <button
+              onClick={() => navigate('/build')}
+              className="px-8 py-4 text-white rounded-xl font-bold text-lg transition-all duration-300 flex items-center justify-center gap-2"
+              style={{ background: 'linear-gradient(135deg, #a78bfa, #f472b6)', boxShadow: '0 0 30px rgba(167,139,250,0.4)' }}
             >
-              Start Building →
+              ✨ Try Build Mode →
             </button>
-            <a 
+            <button
+              onClick={() => navigate('/chat')}
+              className="px-8 py-4 bg-blue-500/10 text-white border border-blue-500 rounded-xl font-bold text-lg hover:bg-blue-500/20 neon-glow transition-all duration-300"
+            >
+              Open Chat →
+            </button>
+            <a
               href="#features"
               className="px-8 py-4 bg-transparent text-white border border-gray-600 rounded-xl font-bold text-lg hover:bg-white/5 transition-all duration-300"
             >
