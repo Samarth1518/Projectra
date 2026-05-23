@@ -17,7 +17,9 @@
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "react-syntax-highlighter": "^16.1.1",
-    "lucide-react": "^1.16.0"
+    "lucide-react": "^1.16.0",
+    "mermaid": "^11.4.1",
+    "@stackblitz/sdk": "^1.11.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "latest",

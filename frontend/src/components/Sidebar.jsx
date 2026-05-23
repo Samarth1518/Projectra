@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { MessageSquare, Zap, GraduationCap, Layers, Plus, ChevronRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { MessageSquare, Zap, GraduationCap, Layers, Plus, ChevronRight, Sparkles } from 'lucide-react'
 
 const MODES = [
   {
@@ -147,6 +148,17 @@ export default function Sidebar({ mode, onModeChange, onNewChat, isMobileOpen, o
 
         {/* Bottom */}
         <div className="px-3 py-4 border-t space-y-3" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <Link to="/build">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition-all cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #a78bfa, #f472b6)', boxShadow: '0 0 20px rgba(167,139,250,0.3)' }}
+            >
+              <Sparkles size={16} />
+              Build Mode
+            </motion.div>
+          </Link>
           <motion.button
             onClick={onNewChat}
             whileHover={{ scale: 1.02 }}

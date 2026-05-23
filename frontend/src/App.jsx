@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import LandingPage from './pages/LandingPage'
 import ChatDashboard from './pages/ChatDashboard'
+import BuildPage from './pages/BuildPage'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -32,6 +33,20 @@ function AnimatedRoutes() {
               style={{ height: '100vh' }}
             >
               <ChatDashboard />
+            </motion.div>
+          }
+        />
+        <Route
+          path="/build"
+          element={
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ height: '100vh' }}
+            >
+              <BuildPage />
             </motion.div>
           }
         />
