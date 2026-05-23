@@ -1,10 +1,10 @@
 import sdk from "@stackblitz/sdk";
-import { Download, ExternalLink, MessageSquareWarning } from "lucide-react";
-import { motion } from "framer-motion";
+import { DownloadIcon, ExternalLinkIcon, ChatBubbleIcon } from "@radix-ui/react-icons";
+import { Button } from "../ui/button";
 
 const BASE = import.meta.env.VITE_API_URL || "";
 
-function detectStackBlitzTemplate(files, stack) {
+function detectStackBlitzTemplate(files) {
   const hasPackageJson = !!files["package.json"];
   const hasIndexHtml = !!files["index.html"];
   if (hasPackageJson) {
@@ -15,12 +15,12 @@ function detectStackBlitzTemplate(files, stack) {
     return "node";
   }
   if (hasIndexHtml) return "html";
-  if (stack?.backend?.toLowerCase().includes("python")) return "node"; // best-effort
   return "node";
 }
 
-export default function ResultsBar({ status, projectId, files, stack, onCritique }) {
+export default function ResultsBar({ status, projectId, files, onCritique }) {
   const ready = status === "done" && projectId;
+
   const handleZip = () => {
     if (!ready) return;
     window.open(`${BASE}/api/project/${projectId}/zip`, "_blank");
@@ -32,7 +32,7 @@ export default function ResultsBar({ status, projectId, files, stack, onCritique
     Object.entries(files).forEach(([path, meta]) => {
       sbFiles[path] = meta.code || "";
     });
-    const template = detectStackBlitzTemplate(files, stack);
+    const template = detectStackBlitzTemplate(files);
     sdk.openProject(
       {
         title: "Projectra Build",
@@ -45,31 +45,19 @@ export default function ResultsBar({ status, projectId, files, stack, onCritique
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <ActionButton onClick={handleZip} disabled={!ready} icon={Download} label="Download ZIP" />
-      <ActionButton onClick={handleStackBlitz} disabled={!ready} icon={ExternalLink} label="Open in StackBlitz" />
-      <ActionButton onClick={onCritique} disabled={!ready} icon={MessageSquareWarning} label="Critique" />
+    <div className="flex items-center gap-2 flex-wrap">
+      <Button variant="outline" size="sm" disabled={!ready} onClick={handleZip}>
+        <DownloadIcon className="h-3.5 w-3.5" />
+        Download ZIP
+      </Button>
+      <Button variant="outline" size="sm" disabled={!ready} onClick={handleStackBlitz}>
+        <ExternalLinkIcon className="h-3.5 w-3.5" />
+        Open in StackBlitz
+      </Button>
+      <Button variant="default" size="sm" disabled={!ready} onClick={onCritique}>
+        <ChatBubbleIcon className="h-3.5 w-3.5" />
+        Critique
+      </Button>
     </div>
-  );
-}
-
-function ActionButton({ onClick, disabled, icon: Icon, label }) {
-  return (
-    <motion.button
-      onClick={onClick}
-      disabled={disabled}
-      whileHover={!disabled ? { scale: 1.03 } : {}}
-      whileTap={!disabled ? { scale: 0.97 } : {}}
-      className={`
-        flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border
-        ${disabled
-          ? "border-white/5 text-text-muted bg-white/[0.02] cursor-not-allowed"
-          : "border-white/10 text-text-primary bg-white/[0.04] hover:bg-white/[0.08]"
-        }
-      `}
-    >
-      <Icon size={14} />
-      {label}
-    </motion.button>
   );
 }

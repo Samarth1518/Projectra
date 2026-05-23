@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2 } from "lucide-react";
+import { Cross1Icon, UpdateIcon } from "@radix-ui/react-icons";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Badge } from "../ui/badge";
+import { cn } from "../../lib/utils";
 
 const BASE = import.meta.env.VITE_API_URL || "";
 
 function buildCritiquePrompt({ summary, stack, manifest }) {
-  const fileList = (manifest || []).map(f => `- ${f.path} — ${f.purpose}`).join("\n");
+  const fileList = (manifest || []).map((f) => `- ${f.path}: ${f.purpose}`).join("\n");
   const stackStr = stack ? Object.entries(stack).map(([k, v]) => `${k}: ${v}`).join(", ") : "unspecified";
   return `Project summary: ${summary}\n\nStack: ${stackStr}\n\nFiles generated:\n${fileList}\n\nJudge this project now.`;
 }
@@ -21,7 +23,6 @@ export default function CritiqueDrawer({ open, onClose, summary, stack, manifest
 
   useEffect(() => {
     if (!open) {
-      // Reset when closed.
       if (abortRef.current) abortRef.current.abort();
       abortRef.current = null;
       startedRef.current = false;
@@ -65,9 +66,13 @@ export default function CritiqueDrawer({ open, onClose, summary, stack, manifest
             if (!frame.startsWith("data:")) continue;
             try {
               const evt = JSON.parse(frame.slice(5).trim());
-              if (evt.chunk) setContent(c => c + evt.chunk);
+              if (evt.chunk) setContent((c) => c + evt.chunk);
               if (evt.error) setError(evt.error);
-              if (evt.done) { setLoading(false); try { await reader.cancel(); } catch {} break; }
+              if (evt.done) {
+                setLoading(false);
+                try { await reader.cancel(); } catch {}
+                break;
+              }
             } catch {}
           }
         }
@@ -87,37 +92,51 @@ export default function CritiqueDrawer({ open, onClose, summary, stack, manifest
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-40"
+            className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-40"
             onClick={onClose}
           />
           <motion.aside
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 280 }}
-            className="fixed top-0 right-0 h-full w-full max-w-md z-50 bg-[#0d0d14] border-l border-white/[0.06] flex flex-col"
+            transition={{ type: "spring", damping: 30, stiffness: 260 }}
+            className="fixed top-0 right-0 h-full w-full max-w-md z-50 bg-background border-l border-border flex flex-col shadow-lg"
           >
-            <header className="flex items-center justify-between px-5 py-4 border-b border-white/[0.06]">
+            <header className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-text-muted font-semibold">Judge Mode</p>
-                <h2 className="text-sm font-bold gradient-text">AI Critique</h2>
+                <Badge variant="muted" className="mb-1.5">Judge Mode</Badge>
+                <h2 className="text-base font-semibold tracking-tight">AI Critique</h2>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-md hover:bg-white/[0.06] text-text-muted hover:text-text-primary">
-                <X size={16} />
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Close"
+              >
+                <Cross1Icon className="h-4 w-4" />
               </button>
             </header>
-            <div className="flex-1 overflow-y-auto px-5 py-4 prose-sm">
+            <div className="flex-1 overflow-y-auto px-5 py-4">
               {loading && !content && (
-                <div className="flex items-center gap-2 text-text-muted text-sm">
-                  <Loader2 size={14} className="animate-spin text-neon-purple" />
-                  Asking the judge…
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <UpdateIcon className="h-3.5 w-3.5 animate-spin text-primary" />
+                  Asking the judge...
                 </div>
               )}
-              {error && (
-                <p className="text-red-400 text-xs">⚠ {error}</p>
-              )}
-              <div className="markdown-body text-sm text-text-secondary leading-relaxed">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {error && <p className="text-destructive text-xs">{error}</p>}
+              <div className="text-sm text-foreground/85 leading-relaxed prose-sm">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({ children }) => <h1 className="text-base font-semibold mt-3 mb-1.5 text-foreground">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-sm font-semibold mt-2.5 mb-1 text-foreground">{children}</h2>,
+                    p: ({ children }) => <p className="mb-2 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-2 pl-5 list-disc space-y-1 marker:text-muted-foreground">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-2 pl-5 list-decimal space-y-1 marker:text-muted-foreground">{children}</ol>,
+                    li: ({ children }) => <li className="text-sm">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                    em: ({ children }) => <em className="text-primary not-italic font-medium">{children}</em>,
+                  }}
+                >
                   {content}
                 </ReactMarkdown>
               </div>

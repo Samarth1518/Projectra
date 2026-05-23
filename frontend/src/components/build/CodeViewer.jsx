@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useTheme } from "../theme/ThemeProvider";
 
 const LANG_MAP = {
   jsx: "jsx",
@@ -19,8 +20,9 @@ const LANG_MAP = {
 
 export default function CodeViewer({ path, code, language, status }) {
   const ref = useRef(null);
+  const { resolvedTheme } = useTheme();
+  const style = resolvedTheme === "dark" ? oneDark : oneLight;
 
-  // Auto-scroll to bottom while streaming.
   useEffect(() => {
     if (status === "streaming" && ref.current) {
       ref.current.scrollTop = ref.current.scrollHeight;
@@ -29,7 +31,7 @@ export default function CodeViewer({ path, code, language, status }) {
 
   if (!path) {
     return (
-      <div className="h-full flex items-center justify-center text-text-muted text-sm italic">
+      <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
         Select a file to preview its source.
       </div>
     );
@@ -37,8 +39,8 @@ export default function CodeViewer({ path, code, language, status }) {
 
   if (!code) {
     return (
-      <div className="h-full flex items-center justify-center text-text-muted text-sm italic">
-        {status === "pending" ? "Waiting in queue…" : "Streaming…"}
+      <div className="h-full flex items-center justify-center text-muted-foreground text-sm italic">
+        {status === "pending" ? "Waiting in queue" : "Streaming"}
       </div>
     );
   }
@@ -47,22 +49,22 @@ export default function CodeViewer({ path, code, language, status }) {
 
   return (
     <div className="h-full flex flex-col">
-      <div className="px-4 py-2 border-b border-white/[0.06] text-xs font-mono text-text-secondary flex items-center justify-between flex-shrink-0">
+      <div className="px-4 py-2 border-b border-border text-xs font-mono text-muted-foreground flex items-center justify-between flex-shrink-0">
         <span>{path}</span>
-        <span className="text-text-muted">
-          {status === "streaming" ? "streaming…" : status === "done" ? "complete" : status}
+        <span>
+          {status === "streaming" ? "streaming" : status === "done" ? "complete" : status}
         </span>
       </div>
       <div ref={ref} className="flex-1 overflow-auto">
         <SyntaxHighlighter
           language={prismLang}
-          style={atomDark}
+          style={style}
           customStyle={{
             margin: 0,
             padding: "16px",
             background: "transparent",
             fontSize: "12px",
-            lineHeight: "1.55",
+            lineHeight: "1.6",
           }}
           showLineNumbers
         >

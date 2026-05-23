@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, ArrowLeft, Play, Square } from "lucide-react";
+import {
+  MagicWandIcon,
+  ArrowLeftIcon,
+  PlayIcon,
+  StopIcon,
+  HomeIcon,
+} from "@radix-ui/react-icons";
 import { useAgentBuild } from "../hooks/useAgentBuild";
 import FileTree from "../components/build/FileTree";
 import CodeViewer from "../components/build/CodeViewer";
@@ -10,6 +16,11 @@ import StageStepper from "../components/build/StageStepper";
 import ResultsBar from "../components/build/ResultsBar";
 import CritiqueDrawer from "../components/build/CritiqueDrawer";
 import VoiceInputButton from "../components/build/VoiceInputButton";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { ThemeToggle } from "../components/theme/ThemeToggle";
+import { cn } from "../lib/utils";
 
 const STACK_OPTIONS = [
   { value: "auto", label: "Auto (let AI choose)" },
@@ -39,83 +50,90 @@ export default function BuildPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#0a0a12] text-text-primary">
-      {/* Top bar */}
-      <header className="border-b border-white/[0.06] bg-[#0d0d14]">
+    <div className="h-screen flex flex-col bg-background text-foreground">
+      <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-20">
         <div className="flex items-center gap-3 px-5 py-3">
-          <Link to="/chat" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary transition-colors">
-            <ArrowLeft size={14} />
+          <Link to="/chat" className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeftIcon className="h-3.5 w-3.5" />
             Chat
           </Link>
-          <div className="h-5 w-px bg-white/10" />
+          <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-2">
-            <Sparkles size={14} className="text-neon-purple" />
-            <span className="font-semibold text-sm gradient-text">Build Mode</span>
+            <MagicWandIcon className="h-3.5 w-3.5 text-primary" />
+            <span className="font-semibold text-sm">Build Mode</span>
+            <Badge variant="muted" className="text-[10px] hidden md:inline-flex">Agentic</Badge>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
             <StageStepper stage={stage} />
+            <div className="h-5 w-px bg-border hidden md:block" />
+            <ThemeToggle />
+            <Link to="/" className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent">
+              <HomeIcon className="h-3.5 w-3.5" />
+            </Link>
           </div>
         </div>
 
-        <form onSubmit={submit} className="flex items-center gap-2 px-5 pb-4">
-          <input
+        <form onSubmit={submit} className="flex flex-wrap items-center gap-2 px-5 pb-3">
+          <Input
             type="text"
-            placeholder="Describe your project — 'a habit tracker with React and a Flask backend'"
+            placeholder="Describe your project. For example: a habit tracker with React and a Flask backend"
             value={idea}
             onChange={(e) => setIdea(e.target.value)}
             disabled={isBusy}
-            className="flex-1 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 focus:border-neon-blue/50 outline-none text-sm placeholder:text-text-muted transition-colors disabled:opacity-60"
+            className="flex-1 min-w-[260px] rounded-xl h-11"
           />
           <VoiceInputButton onTranscript={setIdea} disabled={isBusy} />
           <select
             value={stack}
             onChange={(e) => setStack(e.target.value)}
             disabled={isBusy}
-            className="px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-sm outline-none focus:border-neon-blue/50 disabled:opacity-60"
+            className={cn(
+              "h-11 rounded-xl px-3 text-sm bg-card border border-input text-foreground",
+              "shadow-[inset_0_1px_0_hsl(var(--border)/0.5)]",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              "disabled:opacity-50"
+            )}
           >
-            {STACK_OPTIONS.map(s => <option key={s.value} value={s.value} className="bg-[#0d0d14]">{s.label}</option>)}
+            {STACK_OPTIONS.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
           </select>
-          <motion.button
+          <Button
             type="submit"
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-white"
-            style={{
-              background: isBusy
-                ? "linear-gradient(135deg, #f87171, #ef4444)"
-                : "linear-gradient(135deg, #4f9eff, #a78bfa)",
-              boxShadow: "0 0 20px rgba(79,158,255,0.25)",
-            }}
+            size="lg"
+            variant={isBusy ? "destructive" : "default"}
+            className="h-11 rounded-xl"
           >
-            {isBusy ? <><Square size={14} /> Stop</> : <><Play size={14} /> Build</>}
-          </motion.button>
+            {isBusy ? <><StopIcon className="h-4 w-4" /> Stop</> : <><PlayIcon className="h-4 w-4" /> Build</>}
+          </Button>
         </form>
       </header>
 
-      {/* Body — three panes */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[320px_240px_1fr] overflow-hidden">
-        {/* Plan + diagram */}
-        <aside className="border-r border-white/[0.06] overflow-y-auto p-4 space-y-4">
+        <aside className="border-r border-border overflow-y-auto p-4 space-y-5 bg-sidebar/60">
           <Section title="Plan">
-            {summary
-              ? <p className="text-xs leading-relaxed text-text-secondary">{summary}</p>
-              : <Idle text="The architect will summarise the project here." />}
+            {summary ? (
+              <p className="text-xs leading-relaxed text-foreground/85">{summary}</p>
+            ) : (
+              <Idle text="The architect will summarise the project here." />
+            )}
           </Section>
           <Section title="Architecture">
             <ArchitectureDiagram code={mermaid} />
           </Section>
         </aside>
 
-        {/* File tree */}
-        <aside className="border-r border-white/[0.06] overflow-y-auto p-3">
-          <p className="text-[10px] uppercase tracking-widest text-text-muted px-2 pb-2 font-semibold">
-            Files {manifest.length ? `(${manifest.length})` : ""}
-          </p>
+        <aside className="border-r border-border overflow-y-auto p-3">
+          <div className="flex items-center justify-between px-2 pb-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Files</p>
+            {manifest.length > 0 && (
+              <Badge variant="muted" className="text-[10px]">{manifest.length}</Badge>
+            )}
+          </div>
           <FileTree files={files} activeFile={activeFile} onSelect={setActiveFile} />
         </aside>
 
-        {/* Code viewer */}
-        <main className="overflow-hidden">
+        <main className="overflow-hidden bg-card">
           <CodeViewer
             path={activeFile}
             code={active?.code}
@@ -125,21 +143,13 @@ export default function BuildPage() {
         </main>
       </div>
 
-      {/* Footer actions */}
-      <footer className="border-t border-white/[0.06] bg-[#0d0d14] px-5 py-3 flex items-center justify-between">
-        <div className="text-xs text-text-muted">
-          {error
-            ? <span className="text-red-400">⚠ {error}</span>
-            : status === "done" ? <span className="text-emerald-400">✓ Ready</span>
-            : status === "coding" ? <span className="text-neon-blue">Writing code…</span>
-            : status === "architecting" ? <span className="text-neon-purple">Architecting…</span>
-            : <span>Type an idea above and hit Build.</span>}
-        </div>
+      <footer className="border-t border-border bg-background px-5 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <StatusBadge status={status} error={error} />
         <ResultsBar
           status={status}
           projectId={projectId}
           files={files}
-          stack={null /* not yet wired through; using detect-from-files heuristic */}
+          stack={null}
           onCritique={() => setCritiqueOpen(true)}
         />
       </footer>
@@ -158,12 +168,31 @@ export default function BuildPage() {
 function Section({ title, children }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-widest text-text-muted pb-2 font-semibold">{title}</p>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground pb-2 font-semibold">{title}</p>
       {children}
     </div>
   );
 }
 
 function Idle({ text }) {
-  return <p className="text-xs italic text-text-muted">{text}</p>;
+  return <p className="text-xs italic text-muted-foreground">{text}</p>;
+}
+
+function StatusBadge({ status, error }) {
+  if (error) {
+    return <span className="text-xs text-destructive">{error}</span>;
+  }
+  if (status === "done") {
+    return (
+      <motion.span
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className="text-xs text-primary font-medium"
+      >
+        Ready
+      </motion.span>
+    );
+  }
+  if (status === "coding") return <span className="text-xs text-foreground">Writing code</span>;
+  if (status === "architecting") return <span className="text-xs text-foreground">Architecting</span>;
+  return <span className="text-xs text-muted-foreground">Type an idea above and hit Build.</span>;
 }

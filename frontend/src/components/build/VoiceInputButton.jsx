@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { SpeakerLoudIcon, SpeakerOffIcon } from "@radix-ui/react-icons";
 import { motion } from "framer-motion";
+import { cn } from "../../lib/utils";
 
 function getRecognition() {
   if (typeof window === "undefined") return null;
@@ -56,19 +57,19 @@ export default function VoiceInputButton({ onTranscript, disabled }) {
       type="button"
       onClick={toggle}
       disabled={disabled}
-      whileHover={!disabled ? { scale: 1.05 } : {}}
-      whileTap={!disabled ? { scale: 0.95 } : {}}
+      whileHover={!disabled ? { scale: 1.04 } : {}}
+      whileTap={!disabled ? { scale: 0.96 } : {}}
+      aria-label={listening ? "Stop listening" : "Speak your idea"}
       title={listening ? "Stop listening" : "Speak your idea"}
-      className={`
-        flex items-center justify-center w-10 h-10 rounded-xl border transition-colors
-        ${listening
-          ? "bg-red-500/20 border-red-400/60 text-red-400 animate-pulse"
-          : "bg-white/[0.04] border-white/10 text-text-secondary hover:text-text-primary"
-        }
-        ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-      `}
+      className={cn(
+        "h-11 w-11 rounded-xl border flex items-center justify-center transition-colors",
+        listening
+          ? "bg-destructive/15 border-destructive/40 text-destructive animate-pulse"
+          : "bg-card border-input text-muted-foreground hover:text-foreground hover:bg-accent",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
     >
-      {listening ? <MicOff size={16} /> : <Mic size={16} />}
+      {listening ? <SpeakerOffIcon className="h-4 w-4" /> : <SpeakerLoudIcon className="h-4 w-4" />}
     </motion.button>
   );
 }
