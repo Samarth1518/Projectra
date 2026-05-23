@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -10,7 +10,6 @@ import {
   ChatBubbleIcon,
   CodeIcon,
   ReaderIcon,
-  StarFilledIcon,
   GitHubLogoIcon,
   TwitterLogoIcon,
   LinkedInLogoIcon,
@@ -96,128 +95,14 @@ const STEPS = [
   },
 ];
 
-const PRICING_PLANS = {
-  monthly: [
-    {
-      name: "Free",
-      price: "$0",
-      cadence: "/month",
-      pitch: "For students and hackathon teams getting started.",
-      cta: "Start free",
-      features: [
-        "Unlimited chat",
-        "5 builds per day",
-        "Download ZIP",
-        "Community support",
-      ],
-    },
-    {
-      name: "Pro",
-      price: "$12",
-      cadence: "/month",
-      pitch: "For builders who ship multiple projects a week.",
-      cta: "Go Pro",
-      featured: true,
-      features: [
-        "Unlimited builds",
-        "Priority Gemini queue",
-        "StackBlitz handoff",
-        "AI critique unlimited",
-        "Voice input",
-        "Email support",
-      ],
-    },
-    {
-      name: "Team",
-      price: "$39",
-      cadence: "/month",
-      pitch: "For small teams collaborating on multiple projects.",
-      cta: "Talk to us",
-      features: [
-        "Everything in Pro",
-        "5 seats included",
-        "Shared project library",
-        "SSO",
-        "Dedicated support",
-      ],
-    },
-  ],
-  yearly: [
-    {
-      name: "Free",
-      price: "$0",
-      cadence: "/year",
-      pitch: "For students and hackathon teams getting started.",
-      cta: "Start free",
-      features: [
-        "Unlimited chat",
-        "5 builds per day",
-        "Download ZIP",
-        "Community support",
-      ],
-    },
-    {
-      name: "Pro",
-      price: "$108",
-      cadence: "/year",
-      pitch: "For builders who ship multiple projects a week.",
-      cta: "Go Pro",
-      featured: true,
-      features: [
-        "Unlimited builds",
-        "Priority Gemini queue",
-        "StackBlitz handoff",
-        "AI critique unlimited",
-        "Voice input",
-        "Email support",
-      ],
-    },
-    {
-      name: "Team",
-      price: "$348",
-      cadence: "/year",
-      pitch: "For small teams collaborating on multiple projects.",
-      cta: "Talk to us",
-      features: [
-        "Everything in Pro",
-        "5 seats included",
-        "Shared project library",
-        "SSO",
-        "Dedicated support",
-      ],
-    },
-  ],
-};
-
-const TESTIMONIALS = [
-  {
-    quote:
-      "I gave Projectra one sentence and it shipped my hackathon prototype in 40 seconds. Judges thought we worked on it for a week.",
-    name: "Aarav S.",
-    role: "CS Junior, BITS Pilani",
-  },
-  {
-    quote:
-      "The Critique mode caught three real issues in our build before the judges could. Felt like having a senior dev review for free.",
-    name: "Mei T.",
-    role: "Hackathon team lead",
-  },
-  {
-    quote:
-      "Streaming the actual code into a file tree is the only AI demo that has made my engineering manager say 'wait, again?'.",
-    name: "Daniel R.",
-    role: "Junior PM, Bangalore",
-  },
-];
-
 const FOOTER_LINKS = [
   {
     title: "Product",
     items: [
       { label: "Build Mode", to: "/build" },
       { label: "Chat", to: "/chat" },
-      { label: "Pricing", to: "#pricing" },
-      { label: "Roadmap", to: "#" },
+      { label: "Features", to: "#features" },
+      { label: "How it works", to: "#how" },
     ],
   },
   {
@@ -244,9 +129,7 @@ const FOOTER_LINKS = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [billing, setBilling] = useState("monthly");
   const [email, setEmail] = useState("");
-  const plans = PRICING_PLANS[billing];
 
   return (
     <div className="min-h-screen bg-background text-foreground antialiased">
@@ -259,10 +142,6 @@ export default function LandingPage() {
       <FeaturesSection />
 
       <HowItWorksSection />
-
-      <PricingSection plans={plans} billing={billing} onBillingChange={setBilling} onPickPlan={() => navigate("/chat")} />
-
-      <TestimonialsSection />
 
       <CtaSection
         email={email}
@@ -291,8 +170,7 @@ function Navbar({ onLaunch, onBuild }) {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          <a href="#testimonials" className="hover:text-foreground transition-colors">Reviews</a>
+          <a href="https://github.com/Samarth1518/Projectra" target="_blank" rel="noreferrer" className="hover:text-foreground transition-colors">GitHub</a>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -311,22 +189,35 @@ function Navbar({ onLaunch, onBuild }) {
 }
 
 function Hero({ onBuild, onChat }) {
+  // Subtle parallax: the bg image translates slower than the page so it
+  // appears to recede as you scroll. Range is intentionally small so it
+  // feels like depth, not motion.
+  const { scrollY } = useScroll();
+  const imageY = useTransform(scrollY, [0, 700], [0, 120]);
+  const imageScale = useTransform(scrollY, [0, 700], [1, 1.08]);
+
   return (
     <section className="relative pt-32 pb-24 px-6 overflow-hidden">
-      {/* Background image with very heavy fade so headline sits comfortably on it. */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <img
-          src="/hero.jpg"
-          alt=""
-          className="w-full h-full object-cover opacity-25 dark:opacity-30"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
+      {/* Parallax background. The image lives inside its own clipped layer
+          so the translate doesn't affect surrounding sections. */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <motion.div
+          style={{ y: imageY, scale: imageScale }}
+          className="absolute -inset-y-20 inset-x-0 will-change-transform"
+        >
+          <img
+            src="/hero.jpg"
+            alt=""
+            className="w-full h-full object-cover opacity-30 dark:opacity-35"
+          />
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/85 to-background" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background))_75%)]" />
       </div>
 
       <motion.div
         initial="hidden" animate="visible" variants={stagger}
-        className="mx-auto max-w-4xl text-center"
+        className="mx-auto max-w-4xl text-center relative"
       >
         <motion.div variants={fadeUp} transition={easing}>
           <Badge variant="outline" className="mb-6 px-3 py-1 text-xs">
@@ -517,128 +408,6 @@ function HowItWorksSection() {
               </div>
               <h3 className="mt-5 font-semibold text-base">{s.title}</h3>
               <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">{s.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </section>
-  );
-}
-
-function PricingSection({ plans, billing, onBillingChange, onPickPlan }) {
-  return (
-    <section id="pricing" className="px-6 py-24 border-t border-border/60">
-      <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-        variants={stagger}
-        className="mx-auto max-w-6xl"
-      >
-        <motion.div variants={fadeUp} transition={easing} className="text-center max-w-2xl mx-auto">
-          <Badge variant="muted" className="mb-3">Pricing</Badge>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            Free while you learn. Affordable when you ship.
-          </h2>
-
-          <div className="mt-8 inline-flex items-center rounded-full border border-border bg-background p-1 text-sm">
-            <BillingPill active={billing === "monthly"} onClick={() => onBillingChange("monthly")}>Monthly</BillingPill>
-            <BillingPill active={billing === "yearly"} onClick={() => onBillingChange("yearly")}>
-              Yearly
-              <span className="ml-2 text-[10px] font-medium text-primary">Save 25%</span>
-            </BillingPill>
-          </div>
-        </motion.div>
-
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
-          {plans.map((plan) => (
-            <motion.div key={plan.name} variants={fadeUp} transition={easing}>
-              <Card
-                className={cn(
-                  "h-full p-8 flex flex-col",
-                  plan.featured && "border-primary shadow-md ring-1 ring-primary/30"
-                )}
-              >
-                {plan.featured && (
-                  <Badge className="self-start mb-3">Most popular</Badge>
-                )}
-                <h3 className="text-lg font-semibold">{plan.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{plan.pitch}</p>
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold tracking-tight">{plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.cadence}</span>
-                </div>
-
-                <ul className="mt-6 space-y-2.5 flex-1">
-                  {plan.features.map((feat) => (
-                    <li key={feat} className="flex items-start gap-2 text-sm">
-                      <CheckIcon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                      <span className="text-foreground/90">{feat}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  variant={plan.featured ? "default" : "outline"}
-                  className="mt-8 w-full"
-                  onClick={onPickPlan}
-                >
-                  {plan.cta}
-                </Button>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-    </section>
-  );
-}
-
-function BillingPill({ active, children, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "relative inline-flex items-center px-4 py-1.5 rounded-full transition-colors",
-        active ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
-      )}
-    >
-      {children}
-    </button>
-  );
-}
-
-function TestimonialsSection() {
-  return (
-    <section id="testimonials" className="px-6 py-24 border-t border-border/60 bg-muted/30">
-      <motion.div
-        initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-        variants={stagger}
-        className="mx-auto max-w-6xl"
-      >
-        <motion.div variants={fadeUp} transition={easing} className="text-center max-w-2xl mx-auto mb-12">
-          <Badge variant="muted" className="mb-3">Reviews</Badge>
-          <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            Students and hackathon teams ship faster.
-          </h2>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {TESTIMONIALS.map((t) => (
-            <motion.div key={t.name} variants={fadeUp} transition={easing}>
-              <Card className="h-full p-6 flex flex-col">
-                <div className="flex gap-1 mb-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <StarFilledIcon key={i} className="h-3.5 w-3.5 text-primary" />
-                  ))}
-                </div>
-                <p className="text-sm text-foreground leading-relaxed flex-1">
-                  {t.quote}
-                </p>
-                <div className="mt-6 pt-4 border-t border-border/60">
-                  <p className="text-sm font-medium">{t.name}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}</p>
-                </div>
-              </Card>
             </motion.div>
           ))}
         </div>
