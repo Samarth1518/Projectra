@@ -8,6 +8,7 @@ KeyPool, sse() helper, and SDK error-handling pattern from app.py.
 
 import json
 import os
+import queue
 import tempfile
 import threading
 import time
@@ -130,20 +131,25 @@ def sse_keepalive():
 def _code_files(pool, sse, initial_key: str, plan: "ArchitectPlan", project_dir: Path):
     """Generator: stream per-file code and persist to disk.
 
-    Reuses the KeyPool for transparent 429/INVALID failover *between*
-    files (we never swap keys mid-stream — that would corrupt output)."""
+    Per-file Gemini calls run in a worker thread; the SSE generator
+    polls a queue and emits a `: keepalive\\n\\n` comment every ~1.5s
+    while the queue is empty. This keeps Render / Cloudflare / nginx
+    proxies from idle-closing the SSE connection while we wait for
+    Gemini's first byte (typically 2-6s per file).
+
+    Between files we *don't* swap keys mid-stream (would corrupt
+    output). On 429 / INVALID_KEY before the first chunk, we rotate
+    to the next key in the pool and retry the same file."""
     stack_str = json.dumps(plan.stack.model_dump(exclude_none=True))
     current_key = initial_key
+    _SENTINEL = object()
 
     for file_index, file_spec in enumerate(plan.files):
-        # Brief gap to dodge per-minute RPM ceilings on the free tier.
-        if file_index > 0:
-            for _ in range(8):  # ~1.6s of heartbeats so the proxy doesn't time out
-                yield sse_keepalive()
-                time.sleep(0.2)
-
         path = file_spec.path
         yield sse({"type": "file_start", "path": path, "language": file_spec.language})
+        # Immediately push a keepalive so the proxy registers activity
+        # even before the worker thread spins up.
+        yield sse_keepalive()
 
         prompt = CODER_PROMPT_TEMPLATE.format(
             path=path,
@@ -153,50 +159,80 @@ def _code_files(pool, sse, initial_key: str, plan: "ArchitectPlan", project_dir:
             language=file_spec.language,
         )
 
-        # Try with the current key; on 429/INVALID, mark cooled and rotate.
-        # Cap attempts at the pool size + 1 so we don't loop forever.
         max_attempts = max(len(pool), 1) + 1
         chunks: list[str] = []
-        wrote_any_chunk = False
         succeeded = False
-        last_error = None
+        last_error: Optional[str] = None
 
         for attempt in range(max_attempts):
             if not current_key:
-                last_error = "All API keys exhausted."
+                last_error = "No keys available."
                 break
 
-            try:
-                client = genai.Client(api_key=current_key)
-                stream = client.models.generate_content_stream(
-                    model="gemini-2.5-flash",
-                    contents=prompt,
-                )
-                for chunk in stream:
-                    if chunk.text:
-                        chunks.append(chunk.text)
-                        wrote_any_chunk = True
-                        yield sse({"type": "file_chunk", "path": path, "code": chunk.text})
+            q: "queue.Queue" = queue.Queue()
+            err_holder: dict = {"err": None}
+            attempt_chunks: list[str] = []
+
+            def _worker(key: str, prompt_: str, out_q: "queue.Queue", holder: dict, sentinel):
+                try:
+                    client = genai.Client(api_key=key)
+                    stream = client.models.generate_content_stream(
+                        model="gemini-2.5-flash",
+                        contents=prompt_,
+                    )
+                    for chunk in stream:
+                        if chunk.text:
+                            out_q.put(chunk.text)
+                except Exception as e:
+                    holder["err"] = e
+                finally:
+                    out_q.put(sentinel)
+
+            t = threading.Thread(
+                target=_worker,
+                args=(current_key, prompt, q, err_holder, _SENTINEL),
+                daemon=True,
+            )
+            t.start()
+
+            wrote_any_chunk = False
+            while True:
+                try:
+                    item = q.get(timeout=1.5)
+                except queue.Empty:
+                    yield sse_keepalive()
+                    continue
+                if item is _SENTINEL:
+                    break
+                attempt_chunks.append(item)
+                wrote_any_chunk = True
+                yield sse({"type": "file_chunk", "path": path, "code": item})
+
+            err = err_holder["err"]
+            if err is None:
+                chunks = attempt_chunks
                 succeeded = True
                 break
 
-            except genai.errors.ClientError as e:
-                msg = str(e)
-                if wrote_any_chunk:
-                    # Mid-stream failure — don't switch keys (would corrupt the
-                    # file). Surface the error and move on to the next file.
-                    last_error = f"Interrupted mid-stream: {msg[:200]}"
-                    break
-                if e.code == 429:
+            msg = str(err)
+            if wrote_any_chunk:
+                # Don't swap keys mid-stream — would corrupt the file.
+                last_error = f"Interrupted mid-stream: {msg[:200]}"
+                chunks = attempt_chunks
+                break
+
+            if isinstance(err, genai.errors.ClientError):
+                code = getattr(err, "code", None)
+                if code == 429:
                     pool.mark_failed(current_key, "quota")
                     new_key = pool.acquire()
                     if not new_key:
-                        last_error = "All keys are rate-limited."
+                        last_error = "All keys are rate-limited. Try again in ~60s."
                         break
                     current_key = new_key
-                    yield sse({"type": "info", "message": f"Rate-limited; rotated to next key for {path}"})
+                    yield sse({"type": "info", "message": f"Rate-limited; rotated key for {path}"})
                     continue
-                if e.code == 400 and "API_KEY_INVALID" in msg:
+                if code == 400 and "API_KEY_INVALID" in msg:
                     pool.mark_failed(current_key, "invalid")
                     new_key = pool.acquire()
                     if not new_key:
@@ -204,21 +240,16 @@ def _code_files(pool, sse, initial_key: str, plan: "ArchitectPlan", project_dir:
                         break
                     current_key = new_key
                     continue
-                last_error = msg[:300]
-                break
-            except Exception as e:
-                last_error = str(e)[:300]
-                break
+            last_error = msg[:300]
+            break
 
-        if not succeeded:
+        if not succeeded and not chunks:
             yield sse({"type": "file_error", "path": path, "error": last_error or "Unknown failure"})
-            # Persist an empty placeholder so the ZIP still includes the path.
             abs_path = project_dir / path
             abs_path.parent.mkdir(parents=True, exist_ok=True)
-            abs_path.write_text(f"// {path}: generation failed — {last_error or 'unknown'}\n", encoding="utf-8")
+            abs_path.write_text(f"// {path}: generation failed - {last_error or 'unknown'}\n", encoding="utf-8")
             continue
 
-        # Persist (after stripping any rogue fences).
         full = _strip_code_fences("".join(chunks))
         abs_path = project_dir / path
         abs_path.parent.mkdir(parents=True, exist_ok=True)
